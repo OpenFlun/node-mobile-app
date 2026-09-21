@@ -1,0 +1,22 @@
+{
+  "ignore_dirs": [
+    ".git",
+    ".vs",
+    ".vscode",
+    ".idea",
+    "android/build",
+    "android/app/build",
+    "android/.gradle",
+    "android/.cxx",
+    "android/.kotlin",
+    "ios/build",
+    "ios/Pods",
+    "node-mobile-app-build",
+    "nodejs-assets",
+    "out",
+    "dist",
+    "dist-apk",
+    "coverage"
+  ],
+  "settle": 20
+}
