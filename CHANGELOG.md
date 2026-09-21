@@ -1,4 +1,4 @@
-## [1.0.2] - 2026-09-20
+## [1.0.2] - 2026-09-21 08:24
 
 ### 修复
 - **依赖树瘦身**：删除主包里未使用的 6 个依赖（`@babel/preset-env`、`@babel/runtime`、`@react-native/jest-preset`、`@react-native/new-app-screen`、`@react-native/typescript-config`、`react-native-safe-area-context`），安装体积与安装耗时下降
