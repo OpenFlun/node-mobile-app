@@ -1,6 +1,6 @@
 {
   "name": "@flun/node-mobile-app",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "将 Node.js 项目一键打包为 Android / iOS 移动应用（基于 nodejs-mobile-react-native）",
   "author": "flun <open@flun.top>",
   "keywords": [
