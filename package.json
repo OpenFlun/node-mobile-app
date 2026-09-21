@@ -1,6 +1,6 @@
 {
   "name": "@flun/node-mobile-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "将 Node.js 项目一键打包为 Android / iOS 移动应用（基于 nodejs-mobile-react-native）",
   "author": "flun <open@flun.top>",
   "keywords": [
@@ -28,11 +28,12 @@
     "scripts/",
     "src/",
     "template/",
-    "LICENSE",
-    "mobileAppConfig.js",
-    "README.md",
     "自定义libnode指南.md",
     "Android 构建指南.md",
+    "CHANGELOG.md",
+    "README.md",
+    "LICENSE",
+    "mobileAppConfig.js",
     "package.json"
   ],
   "scripts": {
