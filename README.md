@@ -137,7 +137,7 @@
 ## 安装
 
 ```bash
-npm i --save-dev @flun/node-mobile-app
+npm i -D @flun/node-mobile-app
 ```
 
 安装完成后，会在你的项目根目录自动生成 `mobileAppConfig.js`（配置文件模板）;
