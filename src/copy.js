@@ -73,25 +73,29 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
 
     const mainDeps = mainPkg.dependencies || {};
     const missing = [];
-    let updated = 0;
+    let depsUpdated = 0;
+    let needWrite = false;
 
     // 移除仅用于模板占位说明的 _comment 字段，避免带进最终 build 工程
     if ('_comment' in buildPkg) {
       delete buildPkg._comment;
-      updated++;
+      needWrite = true;
     }
     for (const name of Object.keys(buildPkg.dependencies)) {
       const v = mainDeps[name];
       if (!v) { missing.push(name); continue; }
       if (buildPkg.dependencies[name] !== v) {
         buildPkg.dependencies[name] = v;
-        updated++;
+        depsUpdated++;
+        needWrite = true;
       }
     }
 
-    if (updated > 0) {
+    if (needWrite) {
       writeIfChanged(buildPkgPath, JSON.stringify(buildPkg, null, 2) + '\n');
-      console.log('  ✓ 已同步 ' + updated + ' 个依赖版本到 ' + BUILD_DIR_NAME + '/package.json');
+      if (depsUpdated > 0) {
+        console.log('  ✓ 已同步 ' + depsUpdated + ' 个依赖版本到 ' + BUILD_DIR_NAME + '/package.json');
+      }
     }
 
     if (missing.length > 0) {

@@ -1,4 +1,12 @@
 # Changelog
+## [2.0.2] - 2026-09-23 20:25
+
+### 修复
+
+- **`syncTemplateDependencies` 计数不准确**：`src/copy.js` 里 `_comment` 字段的移除被一并计入 `updated`，导致日志里打印的"已同步 N 个依赖版本"比实际多 1。拆分为 `depsUpdated`（仅统计真正变化的依赖）和 `needWrite`（是否需要写文件），`_comment` 仍会被移除，但不再计入。
+
+---
+
 ## [2.0.1] - 2026-09-23 19:53
 ### 更新
 - 升级了有bug的 `@flun/nodejs-mobile-react-native` v1.0.1版本到v1.0.3
