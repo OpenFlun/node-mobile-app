@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, StyleSheet, useColorScheme } from 'react-native';
 import { WebView } from 'react-native-webview';
-import * as NodeMobile from 'nodejs-mobile-react-native';
+import * as NodeMobile from '@flun/nodejs-mobile-react-native';
 import runtime from './mobileApp.runtime';
 
 // 背景色解析：支持以下三种配置

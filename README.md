@@ -1,6 +1,6 @@
 # @flun/node-mobile-app
 
-将 Node.js 项目一键打包为 Android / iOS 移动应用。基于 [nodejs-mobile-react-native](https://github.com/nodejs-mobile/nodejs-mobile-react-native)。
+将 Node.js 项目一键打包为 Android / iOS 移动应用。运行时由 @flun/nodejs-mobile-react-native 提供，无需修改你的 Node 代码;
 
 **核心理念**：你的的 Node 项目保持不变，CLI 负责搬运、编译、打包。所有定制集中在 `mobileAppConfig.js` 一个文件。
 
@@ -340,8 +340,6 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**——拦截 `net
 │   ├── icon.png
 │   └── release.keystore
 │── 你的其它文件/目录...
-├── nodejs-assets/            # ⚠️ 插件 postinstall 自动生成，可忽略
-│
 └── node-mobile-app-build/    # CLI 生成的 RN 工程（可整体删除重建）
     ├── android/  ios/  App.tsx  index.js  ...
     ├── mobileApp.runtime.ts  # CLI 生成，App.tsx 读
@@ -352,13 +350,6 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**——拦截 `net
             ├── package.json  # 只保留 dependencies
             └── node_modules/ # 你的生产依赖
 ```
-
-**两个 `nodejs-assets` 的区别**：
-
-| 位置                                       | 谁生成           | 用途                                               |
-| ------------------------------------------ | ---------------- | -------------------------------------------------- |
-| `<你的项目>/nodejs-assets/`                | 插件 postinstall | 空骨架，**可以忽略**（已在 `excludeFiles` 里排除） |
-| `<buildDir>/nodejs-assets/nodejs-project/` | CLI              | 真正打包进 App 的内容                              |
 
 ---
 
@@ -388,10 +379,6 @@ adb shell am start -n <你的 appId>/.MainActivity
 adb logcat | grep -E "NODEJS-MOBILE|ReactNativeJS"
 ```
 
-### Q：`nodejs-assets/` 一直出现在你的项目根？
-
-`nodejs-mobile-react-native` 的 postinstall 自动生成。**不影响使用**——CLI 已把它加进 `excludeFiles`，不会带进 build。
-
 ### Q：`npm install` 时提示 `install-scripts not yet covered by allowScripts`？
 
 npm 12 的 advisory 警告。**脚本仍会执行**，只是提示。未来 npm 版本可能要求显式授权——届时在你的项目根 `package.json` 加：
@@ -411,17 +398,33 @@ npm 12 的 advisory 警告。**脚本仍会执行**，只是提示。未来 npm 
 
 Express 5 的路由语法与 4 不同（如 `app.get('*')` 要改成 `app.get('/{*splat}')`），迁移时留意。
 
-### Q：如何替换自定义的 `libnode.so`？
+### Q：`libnode.so` 和 `NodeMobile.xcframework` 是怎么来的？
 
-`libnode.so` 由 `nodejs-mobile-react-native` 提供，路径：
+从 `@flun/nodejs-mobile-react-native` 1.0.1 起，两套预编译二进制**不在 npm 包里**，改为 postinstall 阶段自动从 Gitee / GitHub Release 下载：
 
+| 资源                             | 大小     | 目标位置                                                                    |
+| -------------------------------- | -------- | --------------------------------------------------------------------------- |
+| `android-libnode.zip`            | 约 52 MB | `node_modules/@flun/nodejs-mobile-react-native/android/libnode/`            |
+| `ios-nodemobile.zip`（仅 macOS） | 约 47 MB | `node_modules/@flun/nodejs-mobile-react-native/ios/NodeMobile.xcframework/` |
+
+- 默认下载 v18.20.4 官方二进制
+- Gitee 优先，失败自动回退 GitHub
+- 已装版本匹配则跳过，不重复下
+- 全部源失败时打印下载链接，**不中断 npm 安装**
+
+环境变量：
+
+```bash
+NODE_MOBILE_PREBUILT_VERSION=v22.23.2   # 覆盖默认版本
+NODE_MOBILE_PREBUILT_SKIP=1             # 跳过全部下载
+NODE_MOBILE_PREBUILT_IOS_SKIP=1         # 只跳过 iOS
 ```
-<你的项目>/node_modules/nodejs-mobile-react-native/android/libnode/bin/<架构>/libnode.so
-```
 
-**替换步骤**：
+### Q：如何替换成自定义编译的 `libnode.so`？
 
-1. 把编译好的 `libnode.so` 覆盖到对应架构目录（**只放你实际编译的架构**，如 v22 通常只有 `arm64-v8a` 和 `x86_64`）
+如果你自编译了带 full-icu 的 v22（或其它版本）`libnode.so`，可手动覆盖自动下载的产物：
+
+1. 把编译好的 `libnode.so` 覆盖到 `android/libnode/bin/<架构>/`（**只放你实际编译的架构**）
 2. 如果 `mobileAppConfig.js` 的 `android.abiFilters` 与 libnode 支持的架构不一致，同步调整
 3. 跑 `npx node-mobile-app build` 或 `npx node-mobile-app test`
 

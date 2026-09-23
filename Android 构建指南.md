@@ -66,12 +66,32 @@ $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 
 `nodejs-mobile-react-native` 用它提供 Node.js 运行时。**是否带 full-icu** 决定能跑哪个 Express 版本。
 
-### 2.1 官方 v18（默认随包带）
+### 2.0 预编译二进制怎么来的
+
+从 `@flun/nodejs-mobile-react-native` 1.0.1 起，`libnode.so` **不在 npm 包里**，安装时由 postinstall 脚本从 Gitee / GitHub Release 自动下载：
+
+- **下载源**：Gitee 优先，失败自动回退 GitHub
+- **下载内容**：`android-libnode.zip`（约 52 MB），含 `bin/` + `include/`
+- **覆盖目标**：`node_modules/@flun/nodejs-mobile-react-native/android/libnode/`
+- **幂等**：已装版本匹配则跳过，不重复下载
+- **失败处理**：全部源失败时打印下载链接，不中断 npm 安装
+
+环境变量（按需）：
+
+```bash
+NODE_MOBILE_PREBUILT_VERSION=v22.23.2   # 覆盖默认版本
+NODE_MOBILE_PREBUILT_SKIP=1             # 跳过全部下载
+NODE_MOBILE_PREBUILT_ANDROID_SKIP=1     # 只跳过 Android
+```
+
+**用户不需要手动下载和替换**——除非要换成自编译的版本，见 2.2。
+
+### 2.1 官方 v18（默认自动下载）
 
 路径：
 
 ```
-<你的项目>/node_modules/nodejs-mobile-react-native/android/libnode/bin/<架构>/libnode.so
+<你的项目>/node_modules/@flun/nodejs-mobile-react-native/android/libnode/bin/<架构>/libnode.so
 ```
 
 | 架构        | 大小    |
@@ -107,7 +127,7 @@ $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 **替换步骤**：
 
 1. 下载 `libnode.zip`（含 `bin/` + `include/`）
-2. **整体替换** `你的项目/node_modules/nodejs-mobile-react-native/android/libnode/`
+2. **整体替换** `你的项目/node_modules/@flun/nodejs-mobile-react-native/android/libnode/`
 3. `mobileAppConfig.js` 的 `android.abiFilters` 只写实际存在的架构（v22 是 `['arm64-v8a', 'x86_64']`）
 4. 跑 `npx node-mobile-app test` 或 `build`
 
@@ -271,8 +291,8 @@ NODEJS-MOBILE: [node-mobile-app] failed: Node 服务 5 秒内未启动 -- 请检
 Remove-Item -Recurse -Force D:\你的项目\node-mobile-app-build
 
 # 或删插件 CMake 缓存
-Remove-Item -Recurse -Force D:\你的项目\node_modules\nodejs-mobile-react-native\android\.cxx
-Remove-Item -Recurse -Force D:\你的项目\node_modules\nodejs-mobile-react-native\android\build
+Remove-Item -Recurse -Force D:\你的项目\node_modules\@flun\nodejs-mobile-react-native\android\.cxx
+Remove-Item -Recurse -Force D:\你的项目\node_modules\@flun\nodejs-mobile-react-native\android\build
 
 # 或删指纹文件（下次跑 = 首次构建）
 Remove-Item -Force D:\你的项目\node-mobile-app-build\.build-fingerprint.json

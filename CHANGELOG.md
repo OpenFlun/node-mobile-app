@@ -1,3 +1,81 @@
+# Changelog
+
+## [2.0.0] - 2026-09-22
+
+> **这是一次 major 版本升级**。用户 API 未变，但底层依赖被整体替换，风险等级和官方 CJS 版本不是一个量级。
+
+### 重大变更（Breaking）
+
+- **更换底层 runtime**：`nodejs-mobile-react-native` → **`@flun/nodejs-mobile-react-native`**（flun fork）
+  - 内部全量 ESM 化
+  - `rn-bridge` 保持 CJS（改为 `index.cjs`），兼容 CJS / ESM 项目
+  - 依赖升级：`tar@^6` → `^7`、`glob@^10` → `^13`、`make-fetch-happen@^13` → `^16`
+  - 删除 `xcode` 依赖（RN 0.60 autolinking 前的遗留）
+  - `react-native` peer 标为 optional，避免重复安装
+- **更换原生模块编译工具**：`nodejs-mobile-gyp` → **`@flun/nodejs-mobile-gyp`**（flun fork）
+  - 上游停更、依赖 `tar@6` / `glob@10` 触发 deprecated 与安全审计警告
+  - fork 后升级 `tar@^7`、`glob@^13`、`make-fetch-happen@^16`，0 vulnerabilities
+  - 支持 **Visual Studio 2026**（版本号 18，toolset `v145`）
+  - 强制走 **MSVC** 工具集（不再使用 ClangCL），关闭 LTO
+    - 避免 `MSB8020: 无法找到 ClangCL 的生成工具`
+    - 避免 `LNK1117: 选项"opt:lldltojobs=2"中的语法错误`
+
+### 用户影响
+
+**无需修改任何配置或代码**。`mobileAppConfig.js` 格式、`npx node-mobile-app test / build` 命令、生成的 APK 行为均不变。
+
+但底层 runtime 换了维护主体，若升级后遇到问题，请优先在 `@flun/node-mobile-app` 仓库反馈。
+
+### 新增
+
+- **模板依赖版本自动同步**：`template/package.json` 里声明的依赖版本，由 CLI 在 `copyTemplate` 阶段自动从主包 `package.json` 的 `dependencies` 同步。
+  - 单一数据源：升级依赖只需改主包一处，模板自动跟上
+  - 缺声明会警告：模板里声明但主包未声明的依赖，构建时会打印警告，不静默失败
+  - 实现：`src/copy.js` 新增 `syncTemplateDependencies(pkgRoot, buildDir)`
+
+### 修复
+
+- **主包 `main.js` 生成逻辑适配 rn-bridge**：`generate.js` 生成的 `main.js` 改用 `require('rn-bridge')`（配合 rn-bridge 的 `.cjs`），避免 `await import` 绕过 native binding 的 CJS loader 路径导致崩溃
+- **`@flun/nodejs-mobile-react-native` 插件路径适配**：`src/install.js`、`src/fingerprint.js`、`src/commands/clean.js` 中对插件目录的探测，从 `node_modules/nodejs-mobile-react-native` 改为 `node_modules/@flun/nodejs-mobile-react-native`
+- **模板依赖清理**：
+  - 删除 `template/package.json` 里冗余的 `react-native-safe-area-context`（模板代码零引用）
+  - 删除 `template/@types/nodejs-mobile-react-native/`（源包 `index.d.ts` 已覆盖，且 `package.json` 加了 `types` 字段指向它）
+  - 修正 `template/package.json` 里 `@flun/nodejs-mobile-react-native` 的版本号（旧值 `^18.20.4-flun.1` 在 npm 上不存在）
+
+### 依赖调整
+
+- `dependencies` 里的 `nodejs-mobile-react-native` 换成 `@flun/nodejs-mobile-react-native: ^1.0.1`
+- 该 fork 内部再依赖 `@flun/nodejs-mobile-gyp: ^1.0.1`
+- 依赖树彻底干净，`npm ls tar glob uuid` 无停更包，0 vulnerabilities
+
+### 验证
+
+- Windows + VS2026 BuildTools + Python 3.14 + Node 26.8.1 环境下：
+  - `npx node-mobile-app test` 全链路通过（Gradle 编译 + 部署到真机 + Metro 热更新）
+  - `npx node-mobile-app build` / `build --release` 生成 APK 正常
+  - App 启动正常，Node 服务正常监听端口
+  - 模板依赖版本自动同步经独立测试验证（改假版本号 → CLI 覆盖为真实版本）
+- iOS：保留对 Node 18 的支持（未在 macOS 上实测）
+### 文档同步
+
+**预编译二进制改为自动下载**相关的文档改动：
+
+- `README.md`：
+  - 新增 Q 段落「`libnode.so` 和 `NodeMobile.xcframework` 是怎么来的？」，说明 postinstall 自动下载机制、环境变量、失败处理
+  - 原「如何替换自定义的 `libnode.so`？」改为「如何替换成自定义编译的 `libnode.so`？」，明确适用于自编译 v22+ 场景
+- `Android 构建指南.md`：
+  - 新增 2.0 章节「预编译二进制怎么来的」
+  - 2.1 标题从「默认随包带」改为「默认自动下载」
+- `自定义libnode指南.md`：
+  - 章节二开头加提示：默认 v18 由 postinstall 自动下载，本节仅服务 v22+ 自编译场景
+- **清理 `nodejs-assets/` 相关说明**：`@flun/nodejs-mobile-react-native` 1.0.1 起，宿主项目依赖 `@flun/node-mobile-app` 时不再复制 `nodejs-assets/`，因此：
+  - `README.md`：删除项目根目录树里的 `nodejs-assets/`、删除「两个 nodejs-assets 的区别」整段、删除 Q 段落「nodejs-assets 一直出现在你的项目根」
+  - `mobileAppConfig.js`：`excludeFiles` 里 `nodejs-assets/` 的注释改为「旧版插件残留；防止误打包」
+
+背景：`@flun/nodejs-mobile-react-native` 1.0.1 起，`android-libnode.zip`（约 52 MB）与 `ios-nodemobile.zip`（约 47 MB）不再随 npm 包分发，改为 postinstall 阶段从 Gitee / GitHub Release 自动拉取。npm tarball 从 107 MB 降到 1.2 MB。
+
+---
+
 ## [1.0.2] - 2026-09-21 08:24
 
 ### 修复

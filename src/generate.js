@@ -12,7 +12,8 @@ import { writeIfChanged } from './utils.js';
 const generateMainJs = (targetDir, config, moduleType) => {
   const entry = config.serverPath.startsWith('./') ? config.serverPath : './' + config.serverPath,
     entryLabel = config.serverPath, hb = config.advanced.heartbeatInterval,
-    body = `const rn_bridge = require('rn-bridge');
+    body = `(async () => {
+    const rn_bridge = require('rn-bridge');
     const net = require('net'), https = require('https'), USER_ENTRY = ${JSON.stringify(entry)},
      ENTRY_LABEL = ${JSON.stringify(entryLabel)}, START_TIMEOUT_MS = 5000;
 
@@ -34,11 +35,11 @@ const generateMainJs = (targetDir, config, moduleType) => {
 
     rn_bridge.channel.send('Node was initialized.');
     process.on('uncaughtException', (err) => {
-      console.error('Uncaught Exception:', err);
+      console.error('未捕获的异常:', err);
       emitFailure('未捕获异常', err && err.message);
     });
     process.on('unhandledRejection', (reason) => {
-      console.error('Unhandled Rejection:', reason);
+      console.error('未处理的 Promise rejection:', reason);
       emitFailure('未处理的 Promise rejection', String(reason));
     });
 
@@ -77,7 +78,8 @@ const generateMainJs = (targetDir, config, moduleType) => {
 
     rn_bridge.channel.on('message', (msg) => {
       rn_bridge.channel.send('Echo: ' + msg);
-    });`,
+    });
+    })();`,
     header = moduleType === 'module'
       ? `import { createRequire } from 'module';\nconst require = createRequire(import.meta.url);\n\n` : '',
     file = path.join(targetDir, 'main.js'), changed = writeIfChanged(file, header + body);

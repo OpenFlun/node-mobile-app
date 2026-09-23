@@ -18,11 +18,11 @@ const hashDeps = pkgPath => {
   return h.digest('hex');
 },
   /**
-   * 内部：定位 nodejs-mobile-react-native 插件目录
+   * 内部：定位 @flun/nodejs-mobile-react-native 插件目录
    */
   findPluginDir = userProjectDir => {
     const candidates = [
-      path.join(userProjectDir, 'node_modules', 'nodejs-mobile-react-native'),
+      path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native'),
     ];
     for (const c of candidates) if (fs.existsSync(path.join(c, 'android', 'build.gradle'))) return c;
     return null;
@@ -84,11 +84,11 @@ const hashDeps = pkgPath => {
     console.log('  ✓ 用户依赖安装完成');
   },
   /**
-   * 修改 nodejs-mobile-react-native 插件 build.gradle 的 abiFilters
+   * 修改 @flun/nodejs-mobile-react-native 插件 build.gradle 的 abiFilters
    */
   patchNodejsMobilePlugin = (userProjectDir, config) => {
     const pluginDir = findPluginDir(userProjectDir);
-    if (!pluginDir) return console.warn('  ⚠️  未找到 nodejs-mobile-react-native 插件，跳过 patch');
+    if (!pluginDir) return console.warn('  ⚠️  未找到 @flun/nodejs-mobile-react-native 插件，跳过 patch');
 
     const file = path.join(pluginDir, 'android', 'build.gradle'),
       abiList = config.android.abiFilters.map((x) => `"${x}"`).join(', ');

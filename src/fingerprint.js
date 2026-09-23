@@ -19,11 +19,11 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
   clearCommonCaches = (buildDir, userProjectDir) => {
     removeDir(path.join(buildDir, 'android', 'build'));
     removeDir(path.join(buildDir, 'android', 'app', 'build'));
-    removeDir(path.join(userProjectDir, 'node_modules', 'nodejs-mobile-react-native', 'android', 'build'));
+    removeDir(path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native', 'android', 'build'));
   },
   computeFingerprint = (userProjectDir, config, pkgRoot) => {
     const abiFilters = [...(config.android.abiFilters || [])].sort(), libnode = {},
-      pluginDir = path.join(userProjectDir, 'node_modules', 'nodejs-mobile-react-native'),
+      pluginDir = path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native'),
       libnodeBin = path.join(pluginDir, 'android', 'libnode', 'bin');
 
     if (fs.existsSync(libnodeBin)) {
@@ -85,7 +85,7 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
       if (appInfoChanged) reasons.push('应用信息');
       console.log('  ⚠️  检测到变化（' + reasons.join('、') + '），清理全部缓存');
       clearCommonCaches(buildDir, userProjectDir);
-      removeDir(path.join(userProjectDir, 'node_modules', 'nodejs-mobile-react-native', 'android', '.cxx'));
+      removeDir(path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native', 'android', '.cxx'));
     }
     else if (depsChanged || appInfoChanged) {
       const reasons = [];

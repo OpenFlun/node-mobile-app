@@ -9,7 +9,7 @@
 
 ---
 
-## 一、为什么需要自定义 libnode.so
+## 一、自定义 libnode.so
 
 `@flun/node-mobile-app` 默认带的是官方 `nodejs-mobile` 的 **v18** 二进制。v18 的限制：
 
@@ -19,11 +19,16 @@
 | 无法用 Express 5               | `path-to-regexp@8` 内部用 `\p{ID_Start}`，v18 加载时崩溃 |
 | 停更                           | 官方不再更新                                             |
 
-**要跑 Express 5 / 用新特性 / 用完整 Unicode 正则**，需替换为自编译的 **v22+ full-icu**。
+**要跑 Express 5 / 用新特性 / 用完整 Unicode 正则**，需替换为 **v22+ full-icu**。
 
 ---
 
 ## 二、用预编译产物（推荐）
+
+> **注意**：从 `@flun/nodejs-mobile-react-native` 1.0.1 起，Android 的 `libnode.so` 由 postinstall 脚本从 Release 自动下载（默认 v18.20.4）。
+> **本节适用于**：要把自动下载的 v18 换成 **v22+ 自编译版本**（带 full-icu，能跑 Express 5）的场景。
+> 若只是用默认 v18，你**不需要**看本节——装包后 `libnode.so` 已就位。
+
 
 ### 2.1 下载地址
 
@@ -67,7 +72,7 @@ libnode/
 
 ```bash
 # 进入插件的 android 目录
-cd <你的项目>/node_modules/nodejs-mobile-react-native/android
+cd <你的项目>/node_modules/@flun/nodejs-mobile-react-native/android
 
 # 备份官方 v18（可选，方便回退）
 cp -r libnode libnode.bak-v18
@@ -81,7 +86,7 @@ mv /tmp/libnode ./libnode
 **Windows 下用 PowerShell**：
 
 ```powershell
-$plugin = '<你的项目>\node_modules\nodejs-mobile-react-native\android'
+$plugin = '<你的项目>\node_modules\@flun\nodejs-mobile-react-native\android'
 
 # 备份
 Copy-Item -Recurse "$plugin\libnode" "$plugin\libnode.bak-v18"

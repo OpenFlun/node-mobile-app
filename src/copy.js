@@ -54,6 +54,47 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
    * 获取 build 目录路径：<userProject>/node-mobile-app-build
    */
   getBuildDir = userProjectDir => path.join(userProjectDir, BUILD_DIR_NAME),
+
+  /**
+   * 把 buildDir/package.json 的依赖版本同步为主包 dependencies 的版本
+   * - 依赖名单来自 buildDir/package.json（模板声明需要哪些依赖）
+   * - 版本号来自 pkgRoot/package.json 的 dependencies（单一数据源）
+   * - 若主包缺少某个依赖，打印警告
+   */
+  syncTemplateDependencies = (pkgRoot, buildDir) => {
+    const buildPkgPath = path.join(buildDir, 'package.json');
+    if (!fs.existsSync(buildPkgPath)) return;
+    const mainPkgPath = path.join(pkgRoot, 'package.json');
+    if (!fs.existsSync(mainPkgPath)) return;
+
+    const buildPkg = readJson(buildPkgPath);
+    const mainPkg = readJson(mainPkgPath);
+    if (!buildPkg.dependencies) return;
+
+    const mainDeps = mainPkg.dependencies || {};
+    const missing = [];
+    let updated = 0;
+    for (const name of Object.keys(buildPkg.dependencies)) {
+      const v = mainDeps[name];
+      if (!v) { missing.push(name); continue; }
+      if (buildPkg.dependencies[name] !== v) {
+        buildPkg.dependencies[name] = v;
+        updated++;
+      }
+    }
+
+    if (updated > 0) {
+      writeIfChanged(buildPkgPath, JSON.stringify(buildPkg, null, 2) + '\n');
+      console.log('  ✓ 已同步 ' + updated + ' 个依赖版本到 ' + BUILD_DIR_NAME + '/package.json');
+    }
+
+    if (missing.length > 0) {
+      console.warn(
+        '  ⚠️  模板声明的以下依赖在主包 dependencies 中不存在：' + missing.join(', ') + '\n' +
+        '     请检查 @flun/node-mobile-app 的 package.json 是否漏声明'
+      );
+    }
+  },
   /**
    * 把 CLI 包里的 template/ 逐文件覆盖到 build 目录
    * - 只覆盖模板里存在的文件，不删除 buildDir 里已有的其他内容（保留 Gradle 增量缓存）
@@ -69,6 +110,7 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     const keepSet = new Set((config && config.keepFiles) || []);
     copyDirOverwrite(templateDir, buildDir, TEMPLATE_EXCLUDE, buildDir, keepSet);
     fs.writeFileSync(path.join(buildDir, 'eslint.config.js'), buildEslintConfigSource(), 'utf-8');
+    syncTemplateDependencies(pkgRoot, buildDir);
     console.log('  ✓ 模板已更新到', BUILD_DIR_NAME + '/');
     if (keepSet.size > 0) console.log('    保留文件:', Array.from(keepSet).join(', '));
   },

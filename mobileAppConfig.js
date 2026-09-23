@@ -145,7 +145,7 @@ export default {
     'build/',
     'tests/',
     './mobileAppConfig.js',           // 配置文件本身不打包
-    'nodejs-assets/',                 // 插件 postinstall 生成的示例骨架
+    'nodejs-assets/',                 // 旧版插件残留；防止误打包
   ],
 
   // ===== 允许执行安装脚本的包 =====
