@@ -113,20 +113,29 @@
 - 改完后需 `watchman watch-del-all && watchman shutdown-server` 才生效
 
 ---
+## 基本配置
 
-## 安装
-首先在你的项目根 `package.json` 加：
+### 允许安装脚本执行
+
+本包在安装时可能触发某些依赖包的自动脚本（如 `postinstall` 等）;如果你的 npm 全局配置或项目配置禁止了脚本执行（例如设置了 `ignore-scripts=true`）,可能会导致安装不完整或运行时异常;
+
+推荐在项目根目录的 `package.json` 中添加 `allowScripts` 字段,显式放行本包及其依赖的脚本:
 
 ```json
 {
   "allowScripts": {
-   "node": true,
-   "@flun/node-mobile-app": true // 其它允许字段请自行添加
-
+    "@flun/nodejs-mobile-react-native": true,
+    "@flun/node-mobile-app": true
   }
 }
 ```
-不然可能无法安装本包的脚本(仅针对 node-v26+);然后执行安装指令:
+
+> 如果你信任所有安装包,也可以直接在项目 `.npmrc` 中设置 `allow-scripts = false`（表示关闭脚本拦截,所有脚本均允许执行）,或删除 `ignore-script`字段;
+
+---
+
+## 安装
+
 ```bash
 npm i --save-dev @flun/node-mobile-app
 ```
@@ -379,16 +388,8 @@ adb logcat | grep -E "NODEJS-MOBILE|ReactNativeJS"
 ```
 
 ### Q：`npm install` 时提示 `install-scripts not yet covered by allowScripts`？
+- 请检查 你的 'package.json' 中 "allowScripts" 字段
 
-npm 12 的 advisory 警告。**脚本仍会执行**，只是提示。未来 npm 版本可能要求显式授权——届时在你的项目根 `package.json` 加：
-
-```json
-{
-  "allowScripts": {
-    "@flun/node-mobile-app": true
-  }
-}
-```
 
 ### Q：Express 版本怎么选？
 
