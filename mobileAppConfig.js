@@ -63,7 +63,6 @@ export default {
     abiFilters: ['arm64-v8a'],        // 打包架构(真机用 arm64-v8a, 模拟器加 x86_64)
     icon: './build/icon.png',         // 应用图标(建议 512x512 PNG)
     usesCleartextTraffic: true,       // 是否允许明文流量(http)
-    buildNativeModules: false,        // 是否在 nodejs-project 里编译原生模块(bcrypt 等)
     permissions: [                    // 额外权限(按需添加)
       // 'android.permission.INTERNET',   // INTERNET 始终包含,不需配置
       // 'android.permission.ACCESS_NETWORK_STATE',
@@ -144,8 +143,7 @@ export default {
     'out/',
     'build/',
     'tests/',
-    './mobileAppConfig.js',           // 配置文件本身不打包
-    'nodejs-assets/',                 // 旧版插件残留；防止误打包
+    './mobileAppConfig.js'            // 配置文件本身不打包
   ],
 
   // ===== 允许执行安装脚本的包 =====

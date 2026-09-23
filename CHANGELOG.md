@@ -30,8 +30,15 @@
 
 - **模板依赖版本自动同步**：`template/package.json` 里声明的依赖版本，由 CLI 在 `copyTemplate` 阶段自动从主包 `package.json` 的 `dependencies` 同步。
   - 单一数据源：升级依赖只需改主包一处，模板自动跟上
-  - 缺声明会警告：模板里声明但主包未声明的依赖，构建时会打印警告，不静默失败
+  - 缺声明会报错：模板里声明但主包未声明的依赖，构建时直接抛错中断，避免模板里的 `"*"` 占位值被误用
   - 实现：`src/copy.js` 新增 `syncTemplateDependencies(pkgRoot, buildDir)`
+- **原生模块自动检测**：CLI 自动判断用户项目依赖里是否含原生模块（带 `binding.gyp` 的包，如 `bcrypt`、`sqlite3`），决定是否编译原生代码。
+  - 移除配置字段 `android.buildNativeModules`——用户无需手动配置
+  - 检测范围：用户根 `package.json` 的 `dependencies` 里，逐个查 `userProjectDir/node_modules/<name>/binding.gyp`
+  - 检测结果纳入依赖哈希：装/卸原生模块自动触发重装重编
+  - 新增环境变量 `NODE_MOBILE_FORCE_REBUILD=1`：特殊场景（如换了 `libnode.so` 但依赖未变）下强制重装重编
+  - 平台限制：Windows 上 nodejs-mobile 无法编译原生模块（上游限制），此功能仅 Linux / macOS 可用
+  - 实现：`src/install.js` 的 `hasNativeModules`、`installUserDeps`、`hashDeps`
 
 ### 修复
 
@@ -71,6 +78,10 @@
 - **清理 `nodejs-assets/` 相关说明**：`@flun/nodejs-mobile-react-native` 1.0.1 起，宿主项目依赖 `@flun/node-mobile-app` 时不再复制 `nodejs-assets/`，因此：
   - `README.md`：删除项目根目录树里的 `nodejs-assets/`、删除「两个 nodejs-assets 的区别」整段、删除 Q 段落「nodejs-assets 一直出现在你的项目根」
   - `mobileAppConfig.js`：`excludeFiles` 里 `nodejs-assets/` 的注释改为「旧版插件残留；防止误打包」
+- **原生模块自动检测**相关的文档改动：
+  - `README.md`：删除配置字段表里的 `buildNativeModules` 行
+  - `Android 构建指南.md`：1.4 章节从「原生模块编译开关（Windows）」改为「原生模块编译（自动检测）」，说明自动识别 `binding.gyp`、`NODE_MOBILE_FORCE_REBUILD` 手动强制、Windows 平台限制
+  - `自定义libnode指南.md`：2.6 章节从「重编原生模块（仅当用到 `bcrypt` 等）」改为「重编原生模块（仅当项目含原生模块）」，说明默认自动处理、手动触发方式；迁移清单与常见坑表格同步
 
 背景：`@flun/nodejs-mobile-react-native` 1.0.1 起，`android-libnode.zip`（约 52 MB）与 `ios-nodemobile.zip`（约 47 MB）不再随 npm 包分发，改为 postinstall 阶段从 Gitee / GitHub Release 自动拉取。npm tarball 从 107 MB 降到 1.2 MB。
 

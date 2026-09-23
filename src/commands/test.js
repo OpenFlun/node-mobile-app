@@ -40,7 +40,7 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
     console.log('\n[3/9] 复制用户项目');
     const { moduleType, targetDir } = copyUserProject(userProjectDir, buildDir, config);
 
-    console.log('\n[4/9] 安装依赖'), installUserDeps(targetDir, config);
+    console.log('\n[4/9] 安装依赖'), installUserDeps(targetDir, userProjectDir, config);
     patchNodejsMobilePlugin(userProjectDir, config);
     patchWebViewSsl(userProjectDir, config);
     writeLocalProperties(buildDir, config);

@@ -243,7 +243,6 @@ adb install -r ./out/<appName>-<versionName>-debug.apk
 | `signing.storePassword` | `string`         | —                    | keystore 密码                                                           |
 | `signing.keyAlias`      | `string`         | —                    | key 别名                                                                |
 | `signing.keyPassword`   | `string`         | —                    | key 密码                                                                |
-| `buildNativeModules`    | `boolean`        | `false`              | 是否在 `nodejs-project` 里编译原生模块（`bcrypt` 等）                   |
 
 ### iOS
 

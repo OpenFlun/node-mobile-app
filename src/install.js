@@ -4,9 +4,11 @@ import crypto from 'crypto';
 import { run } from './utils.js';
 
 /**
- * 内部：依赖 hash（dependencies + type）
+ * 内部：依赖 hash（dependencies + type + 是否含原生模块 + 是否强制重编）
+ * hasNative 纳入哈希：装/卸原生模块时会触发重装
+ * forceRebuild 纳入哈希：用户显式要求重编时会强制重装
  */
-const hashDeps = pkgPath => {
+const hashDeps = (pkgPath, hasNative, forceRebuild) => {
   const h = crypto.createHash('sha256');
   if (fs.existsSync(pkgPath)) {
     try {
@@ -15,8 +17,30 @@ const hashDeps = pkgPath => {
     } catch { h.update('read-error') }
   }
   else h.update('no-package');
+  h.update('|native=' + (hasNative ? '1' : '0'));
+  h.update('|force=' + (forceRebuild ? '1' : '0'));
   return h.digest('hex');
 },
+  /**
+   * 内部：判断用户项目的生产依赖里是否含原生模块（binding.gyp）
+   * 按用户根 package.json 的 dependencies 键名，去 userProjectDir/node_modules 下逐个查
+   * 不用扫 nodejs-project/node_modules：首次构建时它还不存在
+   */
+  hasNativeModules = (userProjectDir) => {
+    const pkgPath = path.join(userProjectDir, 'package.json');
+    if (!fs.existsSync(pkgPath)) return false;
+    let deps = {};
+    try {
+      deps = JSON.parse(fs.readFileSync(pkgPath, 'utf-8')).dependencies || {};
+    } catch {
+      return false;
+    }
+    const nodeModulesDir = path.join(userProjectDir, 'node_modules');
+    for (const name of Object.keys(deps)) {
+      if (fs.existsSync(path.join(nodeModulesDir, name, 'binding.gyp'))) return true;
+    }
+    return false;
+  },
   /**
    * 内部：定位 @flun/nodejs-mobile-react-native 插件目录
    */
@@ -63,20 +87,33 @@ const hashDeps = pkgPath => {
    * 只装 dependencies，不装 devDependencies
    * 依赖未变化且 node_modules 存在时跳过（用 .deps-hash 记录）
    */
-  installUserDeps = (targetDir, config) => {
+  installUserDeps = (targetDir, userProjectDir, config) => {
     const assetsDir = path.dirname(targetDir), bnmFile = path.join(assetsDir, 'BUILD_NATIVE_MODULES.txt'),
-      hashFile = path.join(targetDir, '.deps-hash'), buildNative = !!config.android.buildNativeModules;
-    fs.writeFileSync(bnmFile, buildNative ? '1' : '0');
+      hashFile = path.join(targetDir, '.deps-hash'),
+      nodeModulesDir = path.join(targetDir, 'node_modules'),
+      forceRebuild = process.env.NODE_MOBILE_FORCE_REBUILD === '1';
 
-    // 计算当前依赖 hash
-    const pkgPath = path.join(targetDir, 'package.json'), currentHash = hashDeps(pkgPath),
-      nodeModulesDir = path.join(targetDir, 'node_modules'), hasModules = fs.existsSync(nodeModulesDir);
+    // 自动检测是否有原生模块（binding.gyp）
+    const hasNative = hasNativeModules(userProjectDir);
+    fs.writeFileSync(bnmFile, hasNative ? '1' : '0');
+
+    // 计算当前依赖 hash（含 native + force 状态）
+    const pkgPath = path.join(targetDir, 'package.json'),
+      currentHash = hashDeps(pkgPath, hasNative, forceRebuild),
+      hasModules = fs.existsSync(nodeModulesDir);
     let oldHash = null;
     if (fs.existsSync(hashFile)) try { oldHash = fs.readFileSync(hashFile, 'utf-8').trim(); } catch { };
-    if (hasModules && oldHash === currentHash) return console.log('  ✓ 依赖无变化，跳过安装');
+
+    if (hasModules && oldHash === currentHash && !forceRebuild) {
+      return console.log('  ✓ 依赖无变化，跳过安装');
+    }
+    if (forceRebuild) console.log('  ℹ️  NODE_MOBILE_FORCE_REBUILD=1，强制重装依赖');
 
     const env = { ...process.env };
-    if (buildNative) env.NODEJS_MOBILE_BUILD_NATIVE_MODULES = '1';
+    if (hasNative) {
+      env.NODEJS_MOBILE_BUILD_NATIVE_MODULES = '1';
+      console.log('  ℹ️  检测到原生模块（binding.gyp），将编译原生代码');
+    }
 
     console.log('  安装用户生产依赖（nodejs-assets/nodejs-project）...');
     run('npm', ['install', '--omit=dev', '--no-audit', '--no-fund'], { cwd: targetDir, env });

@@ -29,9 +29,7 @@ const DEFAULT_CONFIG = {
     abiFilters: ['arm64-v8a'],
     icon: './build/icon.png',
     usesCleartextTraffic: true,
-    permissions: [],
-    buildNativeModules: false,
-    signing: {},
+    permissions: [],    signing: {},
   },
   ios: {
     deploymentTarget: '15.1',

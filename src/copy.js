@@ -59,7 +59,7 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
    * 把 buildDir/package.json 的依赖版本同步为主包 dependencies 的版本
    * - 依赖名单来自 buildDir/package.json（模板声明需要哪些依赖）
    * - 版本号来自 pkgRoot/package.json 的 dependencies（单一数据源）
-   * - 若主包缺少某个依赖，打印警告
+   * - 若主包缺少某个依赖，抛错中断（避免模板占位值被真正使用）
    */
   syncTemplateDependencies = (pkgRoot, buildDir) => {
     const buildPkgPath = path.join(buildDir, 'package.json');
@@ -74,6 +74,12 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     const mainDeps = mainPkg.dependencies || {};
     const missing = [];
     let updated = 0;
+
+    // 移除仅用于模板占位说明的 _comment 字段，避免带进最终 build 工程
+    if ('_comment' in buildPkg) {
+      delete buildPkg._comment;
+      updated++;
+    }
     for (const name of Object.keys(buildPkg.dependencies)) {
       const v = mainDeps[name];
       if (!v) { missing.push(name); continue; }
@@ -89,9 +95,11 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     }
 
     if (missing.length > 0) {
-      console.warn(
-        '  ⚠️  模板声明的以下依赖在主包 dependencies 中不存在：' + missing.join(', ') + '\n' +
-        '     请检查 @flun/node-mobile-app 的 package.json 是否漏声明'
+      throw new Error(
+        'template/package.json 声明的以下依赖在主包 dependencies 中不存在：\n' +
+        '       ' + missing.join(', ') + '\n' +
+        '     请在 @flun/node-mobile-app 的 package.json 中补上对应声明（版本号随意，\n' +
+        '     但必须存在，以便 syncTemplateDependencies 覆盖模板里的占位值）。'
       );
     }
   },

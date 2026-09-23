@@ -46,19 +46,32 @@ $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 & $adb devices
 ```
 
-### 1.4 原生模块编译开关（Windows）
+### 1.4 原生模块编译（自动检测）
 
-`nodejs-mobile-react-native` 在 Windows 上无法编译原生模块。CLI 首次运行时自动写：
+CLI 会扫描 `<buildDir>/nodejs-assets/nodejs-project/node_modules/` 下是否有 `binding.gyp` 文件（原生模块的标志），自动写：
 
 ```
-<buildDir>/nodejs-assets/BUILD_NATIVE_MODULES.txt   # 内容: 0
+<buildDir>/nodejs-assets/BUILD_NATIVE_MODULES.txt   # 1=有原生模块，0=无
 ```
 
-**例外场景**：用了 v22 的 `libnode.so`，且需要重编原生模块（如 `bcrypt`）。
+- **检测到原生模块**（如 `bcrypt`、`sqlite3`）：写 `1`，并设环境变量 `NODEJS_MOBILE_BUILD_NATIVE_MODULES=1`，`npm install` 时自动重编
+- **未检测到**：写 `0`，跳过编译
 
-1. `mobileAppConfig.js` 里设 `android.buildNativeModules: true`
-2. 跑 `npx node-mobile-app test`（CLI 写 `1` 并设环境变量 `NODEJS_MOBILE_BUILD_NATIVE_MODULES=1`）
-3. 编完后改回 `false`
+**用户无需手动配置**。检测结果会纳入依赖哈希，装/卸原生模块时会自动触发重装重编。
+
+**手动强制重编**：换过 `libnode.so` 但依赖没变、需要重新编译原生模块时：
+
+```bash
+# Linux / macOS
+NODE_MOBILE_FORCE_REBUILD=1 npx node-mobile-app test
+```
+
+```powershell
+# Windows
+$env:NODE_MOBILE_FORCE_REBUILD=1; npx node-mobile-app test
+```
+
+**平台限制**：Windows 上 nodejs-mobile 无法编译原生模块（上游限制）。此功能仅 Linux / macOS 可用。
 
 ---
 

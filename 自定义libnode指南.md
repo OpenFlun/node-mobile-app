@@ -132,40 +132,33 @@ npx node-mobile-app build     # 打包 APK
 | Patch `app/build.gradle` 的 `ndk.abiFilters`                    | 用 `mobileAppConfig.js` 的值 |
 | Patch `android/gradle.properties` 的 `reactNativeArchitectures` | 同步 ABI 列表                |
 | Patch 插件 `build.gradle` 的 `abiFilters`                       | 让插件只编指定架构           |
-| 重编原生模块（若 `buildNativeModules: true`）                   | 见 2.6                       |
+| 重编原生模块（自动检测 `binding.gyp`）                         | 见 2.6                       |
 
 **你不需要手动清任何缓存。**
 
-### 2.6 重编原生模块（仅当用到 `bcrypt` 等）
+### 2.6 重编原生模块（仅当项目含原生模块）
 
-Node v18 → v22 后，ABI 变了（`NODE_MODULE_VERSION` 从 108 → 127）。`nodejs-project` 里的原生模块（`bcrypt`、`sqlite3` 等）需重编才能与新 `libnode.so` 兼容。
+Node v18 → v22 后，ABI 变了（`NODE_MODULE_VERSION` 从 108 → 127）。**如果项目里装了带 C++ 代码的 npm 包**（如 `bcrypt`、`sqlite3`、`sharp`），换 v22 的 `libnode.so` 后需要重编才能兼容。
 
-**操作**：
+**默认自动处理**：CLI 会扫描 `nodejs-project/node_modules` 下的 `binding.gyp` 判断是否有原生模块，自动决定是否重编，**无需配置**。
 
-1. 在 `mobileAppConfig.js` 里设：
+**手动强制重编**（特殊场景：换过 `libnode.so` 但依赖没变，检测机制未触发）：
 
-```js
-android: {
-  buildNativeModules: true,      // 触发重编
-}
+```bash
+# Linux / macOS
+NODE_MOBILE_FORCE_REBUILD=1 npx node-mobile-app test
 ```
 
-2. 跑 `npx node-mobile-app test`
-   - CLI 写 `BUILD_NATIVE_MODULES.txt = 1`
-   - 设环境变量 `NODEJS_MOBILE_BUILD_NATIVE_MODULES=1`
-   - 重装依赖时自动重编原生模块
-
-3. 编完后**改回 `false`**（避免每次构建都重编）：
-
-```js
-android: {
-  buildNativeModules: false,
-}
+```powershell
+# Windows
+$env:NODE_MOBILE_FORCE_REBUILD=1; npx node-mobile-app test
 ```
 
-**没有原生模块（纯 JS 依赖）**：跳过这步。
+**没有原生模块（纯 JS 依赖）**：无需关心，检测会自动跳过。
 
 **切换架构（arm64 ↔ x86_64）**：不需要重编。JS 依赖跨架构，只有少数原生模块分架构。
+
+**Windows 限制**：Windows 上 nodejs-mobile 无法编译原生模块（上游限制）。此功能仅 Linux / macOS 可用。
 
 ### 2.7 验证
 
@@ -426,7 +419,7 @@ x86_64 在 x64 主机上**无交叉编译问题**，与 arm64 流程一致。`an
 | `Cannot find module 'rn-bridge'`                                          | Node 20+ 不再把链接绑定暴露给 `require()`              | 需修改 Node.js `lib/internal/modules/cjs/loader.js`，从 `NODE_PATH` 加载 `rn-bridge` 的 JS 包装 |
 | `require('rn-bridge')` 返回原生绑定                                       | `loader.js` 补丁未生效                                 | 确认 `rn-bridge.cpp` 保持 `NODE_MODULE_LINKED` 注册宏                                           |
 | JNI 编译报 `undefined symbol: v8::Exception::Error`                       | 插件旧头文件（v18 时代）与 v22 `libnode.so` ABI 不匹配 | **用 `android-libnode.zip` 整目录替换**，其 `include/node/` 是 v22 官方 headers                 |
-| `NODE_MODULE_VERSION` 不匹配                                              | 原生模块未重编                                         | 设 `android.buildNativeModules: true` 后重跑 CLI                                                |
+| `NODE_MODULE_VERSION` 不匹配                                              | 原生模块未重编                                         | `NODE_MOBILE_FORCE_REBUILD=1` 后重跑 CLI                                                |
 | Windows 下 `Unsupported operating system for nodejs-mobile native builds` | 插件硬编码只支持 macOS/Linux                           | 官方 v22 产物已含 Windows 支持（`windows-x86_64` + `host_os=win32`）                            |
 | Gradle 9 报 `Could not find method exec()`                                | Gradle 9 移除 `exec()`                                 | 官方 v22 产物已修复（改用 `providers.exec`）                                                    |
 
