@@ -1,4 +1,15 @@
 # Changelog
+
+## [2.0.3] - 2026-09-25 21:33
+
+### 修复
+
+- **`template/metro.config.js` 排除配置更新**：原来的 `blacklistRE` 在 Metro 0.86+ 已完全移除，`metro-config/src/defaults/exclusionList.js` 的深层导入路径在 Metro 0.83 起也不再暴露，会导致新版本 RN 项目加载 Metro 配置失败。改为：
+  - `blacklistRE` -> `blockList`
+  - 导入路径改为 `metro-config/private/defaults/exclusionList`（不带 `.js` 后缀，经 `.default` 取值）
+  - 正则改为 `/[/\\]nodejs-assets[/\\].*/` 形式，避免字符串转义在跨平台下出错
+
+---
 ## [2.0.2] - 2026-09-23 20:25
 
 ### 修复
