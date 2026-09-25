@@ -9,6 +9,9 @@
   - 导入路径改为 `metro-config/private/defaults/exclusionList`（不带 `.js` 后缀，经 `.default` 取值）
   - 正则改为 `/[/\\]nodejs-assets[/\\].*/` 形式，避免字符串转义在跨平台下出错
 
+### 更新
+- 更新 `@flun/nodejs-mobile-react-native` 依赖;
+
 ---
 ## [2.0.2] - 2026-09-23 20:25
 
