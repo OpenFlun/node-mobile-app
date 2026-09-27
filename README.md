@@ -413,8 +413,8 @@ Express 5 的路由语法与 4 不同（如 `app.get('*')` 要改成 `app.get('/
 
 ```bash
 NODE_MOBILE_PREBUILT_VERSION=<版本号>     # 覆盖默认版本（须为该包 Release 中实际存在的 tag）
-NODE_MOBILE_PREBUILT_SKIP=1             # 跳过全部下载
-NODE_MOBILE_PREBUILT_IOS_SKIP=1         # 只跳过 iOS
+NODE_MOBILE_PREBUILT_SKIP=1              # 跳过全部下载
+NODE_MOBILE_PREBUILT_IOS_SKIP=1          # 只跳过 iOS
 ```
 
 ### Q：如何替换成自定义编译的 `libnode.so`？
