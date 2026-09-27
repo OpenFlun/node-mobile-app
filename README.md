@@ -5,7 +5,7 @@
 **核心理念**：你的的 Node 项目保持不变，CLI 负责搬运、编译、打包。所有定制集中在 `mobileAppConfig.js` 一个文件。
 
 - GitHub：https://github.com/OpenFlun/node-mobile-app
-- Gitee（国内镜像）：https://gitee.com/OpenFlun/node-mobile-app
+- Gitee（中国）：https://gitee.com/OpenFlun/node-mobile-app
 
 ---
 
@@ -20,14 +20,15 @@
 
 ---
 
-## 环境要求
+## 环境要求(最低)
 
 | 项           | 要求                                                                |
 | ------------ | ------------------------------------------------------------------- |
-| Node.js      | >= 18.20.4                                                          |
+| Node.js      | 需满足 `package.json` 的 `engines.node` 字段                        |
 | Android 构建 | JDK **17**、Android SDK（minSdk 29 / targetSdk 36 / compileSdk 37） |
 | iOS 构建     | macOS + Xcode + CocoaPods                                           |
 | 可选         | watchman（提升 Metro 文件监听性能）                                 |
+| Windows 额外 | Visual Studio + Git for Windows（仅编译原生模块时需要，见下方说明） |
 
 **JDK 必须是 17**，Android Gradle Plugin 目前不支持更高版本。
 
@@ -63,9 +64,6 @@
 ├── template/                     # RN 工程模板（运行时复制到你的项目的 node-mobile-app-build/）
 │   ├── android/                  # Android 原生工程
 │   ├── ios/                      # iOS 原生工程
-│   ├── @types/
-│   │   └── nodejs-mobile-react-native/
-│   │       └── index.d.ts        # nodejs-mobile 类型声明
 │   ├── App.tsx                   # RN 主界面（WebView + Node 桥接 + 错误页）
 │   ├── index.js                  # RN 入口（注册根组件）
 │   ├── app.json                  # RN 应用名（CLI 会覆盖）
@@ -130,10 +128,7 @@
 }
 ```
 
-> 如果你信任所有安装包,也可以直接在项目 `.npmrc` 中设置 `allow-scripts = false`（表示关闭脚本拦截,所有脚本均允许执行）,或删除 `ignore-script`字段;
-
 ---
-
 ## 安装
 
 ```bash
@@ -322,15 +317,16 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**——拦截 `net
 
 ## Android / iOS 差异
 
-| 项           | Android                           | iOS                                                    |
-| ------------ | --------------------------------- | ------------------------------------------------------ |
-| 构建环境     | Windows / macOS / Linux           | **仅 macOS**                                           |
-| Node.js 版本 | v18（官方）/ v22+（自编译）       | **v18**（官方；v22 需自编译 `NodeMobile.xcframework`） |
-| Express 版本 | v18 用 4.x，v22 + full-icu 用 5.x | **v18 必须用 4.x**                                     |
-| `test` 离线  | ✓（内置 bundle）                  | ✓（需 `FORCE_BUNDLING=1`）                             |
-| 图标尺寸     | 5 个密度（48~192）                | 9 个尺寸（40~1024）                                    |
+| 项           | Android                                                    | iOS                                       |
+| ------------ | ---------------------------------------------------------- | ----------------------------------------- |
+| 构建环境     | Windows / macOS / Linux                                    | **仅 macOS**                              |
+| 运行时版本   | 官方提供多个版本，可用 `NODE_MOBILE_PREBUILT_VERSION` 切换 | **当前为 v18.20.4**，更高版本后续逐步适配 |
+| Express 版本 | 产物带 full-icu，4.x / 5.x 均可用                          | 当前产物不带 full-icu，**必须用 4.x**     |
+| full-icu     | 自 v22.23.2 产物起支持                                     | 暂无                                      |
+| `test` 离线  | ✓（内置 bundle）                                           | ✓（需 `FORCE_BUNDLING=1`）                |
+| 图标尺寸     | 5 个密度（48~192）                                         | 9 个尺寸（40~1024）                       |
 
-**iOS Node 版本限制**：`nodejs-mobile` 官方为 iOS 提供的二进制停留在 v18。v22 需自行编译 `NodeMobile.xcframework`，流程与 Android 自编译 `libnode.so` 类似（见 `自定义libnode指南.md`）。
+**iOS 运行时版本**：当前 iOS 官方产物为 v18.20.4，更高版本仍在逐步适配。如需提前使用更高版本，可克隆 [nodejs-mobile 仓库](https://github.com/OpenFlun/nodejs-mobile) 自行编译 `NodeMobile.xcframework`，流程与 Android 自编译 `libnode.so` 类似（见 `自定义libnode指南.md`）。
 
 ---
 
@@ -355,6 +351,7 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**——拦截 `net
         └── nodejs-project/   # 你的 Node 项目副本
             ├── server.js     # 你的源码
             ├── main.js       # CLI 生成，桥接代码
+            │── 你允许的其它生产文件/目录...
             ├── package.json  # 只保留 dependencies
             └── node_modules/ # 你的生产依赖
 ```
@@ -393,8 +390,8 @@ adb logcat | grep -E "NODEJS-MOBILE|ReactNativeJS"
 
 ### Q：Express 版本怎么选？
 
-- **`libnode.so` 不带 full-icu（官方 v18）** → **必须用 Express 4**（如 `4.22.2`）
-- **`libnode.so` 带 full-icu（自编译 v22）** → 可以用 Express 5（如 `5.2.1`）
+- **Android**：内置完整 ICU（full-icu）→ 可以用 Express 5
+- **iOS**：暂无 ICU → 必须用 Express 4
 
 Express 5 的路由语法与 4 不同（如 `app.get('*')` 要改成 `app.get('/{*splat}')`），迁移时留意。
 
@@ -402,12 +399,12 @@ Express 5 的路由语法与 4 不同（如 `app.get('*')` 要改成 `app.get('/
 
 从 `@flun/nodejs-mobile-react-native` 1.0.1 起，两套预编译二进制**不在 npm 包里**，改为 postinstall 阶段自动从 Gitee / GitHub Release 下载：
 
-| 资源                             | 大小     | 目标位置                                                                    |
-| -------------------------------- | -------- | --------------------------------------------------------------------------- |
-| `android-libnode.zip`            | 约 52 MB | `node_modules/@flun/nodejs-mobile-react-native/android/libnode/`            |
-| `ios-nodemobile.zip`（仅 macOS） | 约 47 MB | `node_modules/@flun/nodejs-mobile-react-native/ios/NodeMobile.xcframework/` |
+| 资源                             | 目标位置                                                                    |
+| -------------------------------- | --------------------------------------------------------------------------- |
+| `android-libnode.zip`            | `node_modules/@flun/nodejs-mobile-react-native/android/libnode/`            |
+| `ios-nodemobile.zip`（仅 macOS） | `node_modules/@flun/nodejs-mobile-react-native/ios/NodeMobile.xcframework/` |
 
-- 默认下载 v18.20.4 官方二进制
+- 默认下载版本以 `@flun/nodejs-mobile-react-native` 的 `package.json` 中 `prebuiltAssets.version` 字段为准
 - Gitee 优先，失败自动回退 GitHub
 - 已装版本匹配则跳过，不重复下
 - 全部源失败时打印下载链接，**不中断 npm 安装**
@@ -415,14 +412,14 @@ Express 5 的路由语法与 4 不同（如 `app.get('*')` 要改成 `app.get('/
 环境变量：
 
 ```bash
-NODE_MOBILE_PREBUILT_VERSION=v22.23.2   # 覆盖默认版本
+NODE_MOBILE_PREBUILT_VERSION=<版本号>     # 覆盖默认版本（须为该包 Release 中实际存在的 tag）
 NODE_MOBILE_PREBUILT_SKIP=1             # 跳过全部下载
 NODE_MOBILE_PREBUILT_IOS_SKIP=1         # 只跳过 iOS
 ```
 
 ### Q：如何替换成自定义编译的 `libnode.so`？
 
-如果你自编译了带 full-icu 的 v22（或其它版本）`libnode.so`，可手动覆盖自动下载的产物：
+如果你自编译了 `libnode.so`（如需要特定 Node 版本或自定义 ICU），可手动覆盖自动下载的产物：
 
 1. 把编译好的 `libnode.so` 覆盖到 `android/libnode/bin/<架构>/`（**只放你实际编译的架构**）
 2. 如果 `mobileAppConfig.js` 的 `android.abiFilters` 与 libnode 支持的架构不一致，同步调整
@@ -430,7 +427,7 @@ NODE_MOBILE_PREBUILT_IOS_SKIP=1         # 只跳过 iOS
 
 **CLI 会自动处理缓存**：指纹机制检测到 `libnode.so` 或 `abiFilters` 变化，自动清理 `.cxx` / `android/build` / `app/build`，全量重编。**你的无需手动清任何缓存**。
 
-详细流程（自编译 v22 + full-icu）见 `自定义libnode指南.md`。
+详细流程见 `自定义libnode指南.md`。
 
 ### Q：iOS 提示 `fallbackSourceURL does not override`？
 
@@ -441,7 +438,7 @@ RN 0.87 的 API 若变动，`AppDelegate.swift` 里的 fallback 可能不生效�
 ## 相关文档
 
 - [Android 构建指南.md](./Android%20构建指南.md) —— Android 环境配置、踩坑清单
-- [自定义libnode指南.md](./自定义libnode指南.md) —— 自编译 v22 `libnode.so` 的完整流程
+- [自定义libnode指南.md](./自定义libnode指南.md) —— 自编译 `libnode.so` 的完整流程
 
 ---
 

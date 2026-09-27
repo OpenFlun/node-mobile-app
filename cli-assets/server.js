@@ -34,4 +34,4 @@ const PORT = 3000,
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }), res.end(html);
   });
 
-server.listen(PORT, '0.0.0.0', () => console.log(`Express started on port ${PORT}`));
+server.listen(PORT, '0.0.0.0', () => console.log(`Server started on port ${PORT}`));

@@ -81,7 +81,7 @@
   },
   "license": "ISC",
   "engines": {
-    "node": ">= 18.20.4"
+    "node": ">= 18"
   },
   "bin": {
     "node-mobile-app": "./bin/cli.js"

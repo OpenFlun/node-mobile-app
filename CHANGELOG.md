@@ -1,7 +1,10 @@
 # Changelog
+## [2.0.4] - 2026-09-27 21:50
+### 更新
+- 依赖包 '@flun/nodejs-mobile-react-native' 更新为 v2.0.2;
+- 优化了 'README.md' 和 'server.js' 一些细节;
 
 ## [2.0.3] - 2026-09-25 21:33
-
 ### 修复
 
 - **`template/metro.config.js` 排除配置更新**：原来的 `blacklistRE` 在 Metro 0.86+ 已完全移除，`metro-config/src/defaults/exclusionList.js` 的深层导入路径在 Metro 0.83 起也不再暴露，会导致新版本 RN 项目加载 Metro 配置失败。改为：
