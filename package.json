@@ -36,9 +36,7 @@
     "mobileAppConfig.js",
     "package.json"
   ],
-  "scripts": {
-    "postinstall": "node scripts/copy-files.js"
-  },
+  "scripts": {},
   "dependencies": {
     "@babel/core": "^8.0.6",
     "@react-native-community/cli": "^20.2.0",
@@ -62,7 +60,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-native": "^5.0.0",
-    "@flun/nodejs-mobile-react-native": "*"
+    "@flun/nodejs-mobile-react-native": "^2.0.2"
   },
   "allowScripts": {
     "node": true,
