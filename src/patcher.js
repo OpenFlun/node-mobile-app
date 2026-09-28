@@ -2,6 +2,11 @@ import path from 'path';
 import fs from 'fs';
 import { writeIfChanged } from './utils.js';
 
+// 把字符串中所有非 ASCII 字符转成 \uXXXX（Java Properties 规范）
+// gradle.properties 按 ISO-8859-1 读取，无法改为 UTF-8
+const escapeProps = (s) =>
+  String(s).replace(/[^\x00-\x7F]/g, (ch) => '\\u' + ch.charCodeAt(0).toString(16).padStart(4, '0'));
+
 /**
  * 解析最终 appName：
  *   1. config.appName
@@ -160,6 +165,16 @@ const resolveAppName = (userProjectDir, config) => {
     const signing = config.android && config.android.signing;
     if (!signing || !signing.keystore) return; // 未配置签名 → 保持默认
 
+    // 启用签名后 4 项均为必填；缺项时提前报错，避免 Gradle 报"password incorrect"误导排查
+    const _missing = ['storePassword', 'keyAlias', 'keyPassword'].filter((k) => !signing[k]);
+    if (_missing.length > 0) {
+      throw new Error(
+        'android.signing.keystore 已配置，但以下字段为空：' + _missing.join(', ') + '\n' +
+        '  启用签名后，keystore / storePassword / keyAlias / keyPassword 四项均为必填。\n' +
+        '  如仅需本地测试（不签名上架），可注释掉整个 signing 块——模板默认用 debug keystore 签名。'
+      );
+    }
+
     const keystoreAbs = path.resolve(userProjectDir, signing.keystore);
     if (!fs.existsSync(keystoreAbs)) return console.warn('  ⚠️  签名 keystore 不存在，跳过签名配置:', keystoreAbs);
 
@@ -173,11 +188,13 @@ const resolveAppName = (userProjectDir, config) => {
       c = c.replace(/^\s*MYAPP_RELEASE_KEY_ALIAS=.*\r?\n/gm, '');
       c = c.replace(/^\s*MYAPP_RELEASE_KEY_PASSWORD=.*\r?\n/gm, '');
       // 追加新的
-      const esc = keystoreAbs.replace(/\\/g, '/');
+      // gradle.properties 按 ISO-8859-1 读取，非 ASCII 字符必须转 \uXXXX 转义，
+      // 否则中文路径（如「桌面」）会被读成乱码，导致 keystore 找不到。
+      const esc = escapeProps(keystoreAbs.replace(/\\/g, '/'));
       c += `\nMYAPP_RELEASE_STORE_FILE=${esc}\n`;
-      c += `MYAPP_RELEASE_STORE_PASSWORD=${signing.storePassword || ''}\n`;
-      c += `MYAPP_RELEASE_KEY_ALIAS=${signing.keyAlias || ''}\n`;
-      c += `MYAPP_RELEASE_KEY_PASSWORD=${signing.keyPassword || ''}\n`;
+      c += `MYAPP_RELEASE_STORE_PASSWORD=${escapeProps(signing.storePassword || '')}\n`;
+      c += `MYAPP_RELEASE_KEY_ALIAS=${escapeProps(signing.keyAlias || '')}\n`;
+      c += `MYAPP_RELEASE_KEY_PASSWORD=${escapeProps(signing.keyPassword || '')}\n`;
       writeIfChanged(propsFile, c);
     }
 

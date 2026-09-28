@@ -243,10 +243,51 @@ adb install -r ./out/<appName>-<versionName>-debug.apk
 | `icon`                  | `string`         | `'./build/icon.png'` | 应用图标（建议 512×512 PNG）                                           |
 | `usesCleartextTraffic`  | `boolean`        | `true`               | 是否允许明文 HTTP                                                      |
 | `permissions`           | `string[]`       | `[]`                 | 额外权限（如 `'android.permission.CAMERA'`）                           |
-| `signing.keystore`      | `string`         | —                    | 签名 keystore 路径（相对你的项目根）;不填则用模板自带的 debug keystore |
+| `signing`               | `object`         | —                    | 自定义签名配置。**不填则用模板自带的 debug keystore 签名**（可安装测试，不可上架）；填则以下 4 项均为必填 |
+| `signing.keystore`      | `string`         | —                    | keystore 路径（相对你的项目根）                                        |
 | `signing.storePassword` | `string`         | —                    | keystore 密码                                                          |
-| `signing.keyAlias`      | `string`         | —                    | key 别名                                                               |
-| `signing.keyPassword`   | `string`         | —                    | key 密码                                                               |
+| `signing.keyAlias`      | `string`         | —                    | 密钥别名                                                               |
+| `signing.keyPassword`   | `string`         | —                    | 密钥密码（通常与 `storePassword` 相同）                                |
+
+#### 生成自签名 keystore
+
+如需自定义签名（上架或长期使用），先生成 keystore 文件。`keytool` 随 JDK 提供：
+
+- 若已设 `JAVA_HOME`：`& "$env:JAVA_HOME\bin\keytool.exe"`
+- 否则用 JDK 安装目录下的完整路径，例如 `C:\Program Files\Java\jdk-17.0.20\bin\keytool.exe`
+
+```powershell
+# Windows PowerShell
+& "<JDK 安装目录>\bin\keytool.exe" -genkeypair -v `
+  -keystore "<你的项目根>\build\release.keystore" `
+  -alias testkey `
+  -keyalg RSA -keysize 2048 -validity 10000 `
+  -storepass <keystore 密码> -keypass <密钥密码> `
+  -dname "CN=Test, OU=Dev, O=Test, L=City, S=State, C=CN"
+```
+
+```bash
+# macOS / Linux
+keytool -genkeypair -v \
+  -keystore "<你的项目根>/build/release.keystore" \
+  -alias testkey \
+  -keyalg RSA -keysize 2048 -validity 10000 \
+  -storepass <keystore 密码> -keypass <密钥密码> \
+  -dname "CN=Test, OU=Dev, O=Test, L=City, S=State, C=CN"
+```
+
+生成后，把路径、密码、别名填入 `mobileAppConfig.js` 的 `android.signing`：
+
+```js
+signing: {
+  keystore: './build/release.keystore',  // 相对你的项目根
+  storePassword: '<keystore 密码>',
+  keyAlias: 'testkey',
+  keyPassword: '<密钥密码>',
+},
+```
+
+> **提示**：`storepass` / `keypass` 可填相同值，对应配置里 `storePassword` / `keyPassword` 也填相同值。四项缺一不可，缺项时构建前会报错。
 
 ### iOS
 

@@ -81,12 +81,12 @@ export default {
     //   keyAlias:       'androiddebugkey'
     //   keyPassword:    'android'
     //
-    // 自定义签名：取消下面注释，填入你的 keystore 信息
+    // 取消下方整块注释即视为「启用签名」，此时 4 项均为必填（缺项会在构建前报错）
     signing: {
-      // keystore: './build/release.keystore',
-      // storePassword: '',
-      // keyAlias: '',
-      // keyPassword: '',
+      // keystore:      './build/release.keystore', // 必填：keystore 路径（相对用户项目根）
+      // storePassword: '',                         // 必填：keystore 密码
+      // keyAlias:      '',                         // 必填：密钥别名
+      // keyPassword:   '',                         // 必填：密钥密码（与 storePassword 相同可填同值）
     },
   },
 

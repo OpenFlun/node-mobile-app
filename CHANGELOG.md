@@ -1,4 +1,18 @@
 # 变更日志
+
+## [2.0.8] - 2026-09-28 22:17
+### 修复
+
+- **中文路径构建失败**：三处联动修复。
+  - **AGP 拒绝非 ASCII 路径**：`template/android/gradle.properties` 增加 `android.overridePathCheck=true`，允许中文路径构建。
+  - **`gradle.properties` 中文乱码**：该文件按 ISO-8859-1 读取，非 ASCII 字符（如路径中的「桌面」）会被读成乱码，导致 keystore 找不到。`patcher.js` 现在把写入的非 ASCII 字符转成 `\uXXXX` 转义（Java Properties 规范）。
+  - 影响范围：项目路径含中文（或其它非 ASCII 字符）时，release 构建曾失败于 `Your project path contains non-ASCII characters` 与 `Keystore file ... not found`。
+- **签名配置缺项时报错含糊**：`android.signing.keystore` 已配置、但密码 / 别名 / 别名密码为空时，原先会一路跑到 Gradle 才报 `keystore password was incorrect`，容易误导排查方向。现在 `patcher.js` 在构建前即校验四项，缺项时抛出明确错误，并提示「仅本地测试可注释掉整个 signing 块」。
+
+### 变更
+
+- **`mobileAppConfig.js` 模板**：`signing` 块内每项标注「必填」，并说明「取消整块注释即视为启用签名」。
+
 ## [2.0.7] - 2026-09-28 16:05
 ### 更新
 - 更新有小问题依赖-> `@flun/nodejs-mobile-react-native` ;
@@ -28,6 +42,7 @@
 - 更新 `@flun/nodejs-mobile-react-native` 依赖;
 
 ---
+
 ## [2.0.2] - 2026-09-23 20:25
 
 ### 修复
