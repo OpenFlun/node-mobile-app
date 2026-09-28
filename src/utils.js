@@ -99,7 +99,7 @@ const ensureDir = dir => {
       candidates = [
         path.join(localAppData, 'Android', 'Sdk', 'platform-tools', 'adb.exe'),
         path.join(home, 'Library', 'Android', 'sdk', 'platform-tools', 'adb'),
-        path.join(home, 'Android', 'Sdk', 'platform-tools', 'adb'),
+        path.join(home, 'Android', 'Sdk', 'platform-tools', 'adb')
       ];
     for (const c of candidates) if (c && fs.existsSync(c)) return c;
     return 'adb';

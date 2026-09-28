@@ -94,11 +94,11 @@ const generateMainJs = (targetDir, config, moduleType) => {
         enableDomStorage: config.webview.enableDomStorage,
         allowFileAccess: config.webview.allowFileAccess,
         mixedContentMode: config.webview.mixedContentMode,
-        backgroundColor: config.webview.backgroundColor,
+        backgroundColor: config.webview.backgroundColor
       },
     }, content = `// 自动生成，请勿手改\nexport default ${JSON.stringify(data, null, 2)} as const;\n`,
       changed = writeIfChanged(path.join(buildDir, 'mobileApp.runtime.ts'), content);
     console.log(changed ? '  ✓ 已生成 mobileApp.runtime.ts' : '  ✓ mobileApp.runtime.ts 无变化');
-  }
+  };
 
-export { generateMainJs, generateRuntime };
+export { generateMainJs, generateRuntime }

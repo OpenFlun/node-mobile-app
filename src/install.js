@@ -89,31 +89,20 @@ const hashDeps = (pkgPath, hasNative, forceRebuild) => {
    */
   installUserDeps = (targetDir, userProjectDir, config) => {
     const assetsDir = path.dirname(targetDir), bnmFile = path.join(assetsDir, 'BUILD_NATIVE_MODULES.txt'),
-      hashFile = path.join(targetDir, '.deps-hash'),
-      nodeModulesDir = path.join(targetDir, 'node_modules'),
-      forceRebuild = process.env.NODE_MOBILE_FORCE_REBUILD === '1';
+      hashFile = path.join(targetDir, '.deps-hash'), nodeModulesDir = path.join(targetDir, 'node_modules'),
+      forceRebuild = process.env.NODE_MOBILE_FORCE_REBUILD === '1', hasNative = hasNativeModules(userProjectDir);
 
-    // 自动检测是否有原生模块（binding.gyp）
-    const hasNative = hasNativeModules(userProjectDir);
-    fs.writeFileSync(bnmFile, hasNative ? '1' : '0');
-
+    fs.writeFileSync(bnmFile, hasNative ? '1' : '0'); // 自动检测是否有原生模块（binding.gyp）
     // 计算当前依赖 hash（含 native + force 状态）
-    const pkgPath = path.join(targetDir, 'package.json'),
-      currentHash = hashDeps(pkgPath, hasNative, forceRebuild),
+    const pkgPath = path.join(targetDir, 'package.json'), currentHash = hashDeps(pkgPath, hasNative, forceRebuild),
       hasModules = fs.existsSync(nodeModulesDir);
     let oldHash = null;
     if (fs.existsSync(hashFile)) try { oldHash = fs.readFileSync(hashFile, 'utf-8').trim(); } catch { };
-
-    if (hasModules && oldHash === currentHash && !forceRebuild) {
-      return console.log('  ✓ 依赖无变化，跳过安装');
-    }
+    if (hasModules && oldHash === currentHash && !forceRebuild) return console.log('  ✓ 依赖无变化,跳过安装');
     if (forceRebuild) console.log('  ℹ️  NODE_MOBILE_FORCE_REBUILD=1，强制重装依赖');
 
     const env = { ...process.env };
-    if (hasNative) {
-      env.NODEJS_MOBILE_BUILD_NATIVE_MODULES = '1';
-      console.log('  ℹ️  检测到原生模块（binding.gyp），将编译原生代码');
-    }
+    if (hasNative) env.NODEJS_MOBILE_BUILD_NATIVE_MODULES = '1', console.log(' ℹ️ 检测到原生模块（binding.gyp）,将编译原生代码');
 
     console.log('  安装用户生产依赖（nodejs-assets/nodejs-project）...');
     run('npm', ['install', '--omit=dev', '--no-audit', '--no-fund'], { cwd: targetDir, env });

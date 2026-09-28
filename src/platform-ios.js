@@ -139,4 +139,4 @@ const SCHEME = 'MyApp',
     return path.join(exportDir, files[0]);
   };
 
-export { ensureMac, checkIosTools, podInstall, xcodebuildArchive, xcodebuildExport };
+export { ensureMac, checkIosTools, podInstall, xcodebuildArchive, xcodebuildExport }

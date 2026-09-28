@@ -53,7 +53,7 @@ const resolveAppName = (userProjectDir, config) => {
       stringsFile = path.join(buildDir, 'android', 'app', 'src', 'main', 'res', 'values', 'strings.xml'),
       ktFiles = [
         path.join(buildDir, 'android', 'app', 'src', 'main', 'java', 'com', 'myapp', 'MainActivity.kt'),
-        path.join(buildDir, 'android', 'app', 'src', 'main', 'java', 'com', 'myapp', 'MainApplication.kt'),
+        path.join(buildDir, 'android', 'app', 'src', 'main', 'java', 'com', 'myapp', 'MainApplication.kt')
       ];
     // 1. build.gradle
     if (fs.existsSync(gradleFile)) {
@@ -370,5 +370,5 @@ const resolveAppName = (userProjectDir, config) => {
 // ===== 导出 =====
 export {
   resolveAppName, escapeKotlinString, escapeSwiftString, patchAppConfig, patchAndroidConfig, patchSigning,
-  patchIcon, patchIosConfig, patchIosIcon,
+  patchIcon, patchIosConfig, patchIosIcon
 };
