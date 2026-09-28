@@ -1,6 +1,6 @@
 {
   "name": "@flun/node-mobile-app",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "description": "将 Node.js 项目一键打包为 Android / iOS 移动应用,运行时由 @flun/nodejs-mobile-react-native 提供,无需修改你的 Node 代码;",
   "author": "flun <open@flun.top>",
   "keywords": [
