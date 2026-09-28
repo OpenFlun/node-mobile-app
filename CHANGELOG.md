@@ -1,4 +1,8 @@
 # 变更日志
+## [2.0.7] - 2026-09-28 16:05
+### 更新
+- 更新有小问题依赖-> `@flun/nodejs-mobile-react-native` ;
+
 ## [2.0.6] - 2026-09-28 14:57
 ### 更新
 - 更新 `@flun/nodejs-mobile-react-native` 依赖;
