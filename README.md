@@ -177,20 +177,33 @@ npx node-mobile-app build --release
 
 `build` 打出的 APK 在 `outputDir`（默认 `./out/`）里;手动装到手机：
 
+Windows（用环境变量定位 adb，任何用户通用）：
+
 ```powershell
-# Windows PowerShell
 $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
-& $adb install -r "D:\你的项目\out\<appName>-<versionName>-debug.apk"
+& $adb install -r "<编译好的 APK 完整路径>"
+```
+
+macOS / Linux：
+
+```bash
+adb install -r "<编译好的 APK 完整路径>"
+```
+
+例如（`build` 末尾会打印完整路径）：
+
+```powershell
+# Windows
+& $adb install -r "D:\你的项目\out\myapp-1.0.0-release.apk"
 ```
 
 ```bash
 # macOS / Linux
-adb install -r ./out/<appName>-<versionName>-debug.apk
+adb install -r "./out/myapp-1.0.0-release.apk"
 ```
 
 **说明**：
 - `-r` = 覆盖安装（保留应用数据）
-- 不知道 APK 的确切文件名？看 `build` 命令的末尾输出（会打印完整路径）
 - `adb` 找不到？在 `mobileAppConfig.js` 里配 `android.adbPath`
 - `test` 命令已自动安装,无需手动
 
@@ -231,23 +244,23 @@ adb install -r ./out/<appName>-<versionName>-debug.apk
 
 ### Android
 
-| 字段                    | 类型             | 默认                 | 说明                                                                   |
-| ----------------------- | ---------------- | -------------------- | ---------------------------------------------------------------------- |
-| `sdkPath`               | `string \| null` | `null`               | Android SDK 路径（默认自动查找）                                       |
-| `adbPath`               | `string \| null` | `null`               | adb 路径（默认自动查找）                                               |
-| `minSdkVersion`         | `int`            | `29`                 | 最低 SDK（29=Android 10.0）                                            |
-| `targetSdkVersion`      | `int`            | `36`                 | 目标 SDK                                                               |
-| `compileSdkVersion`     | `int`            | `37`                 | 编译 SDK                                                               |
-| `buildToolsVersion`     | `string`         | `'37.0.0'`           | 构建工具版本                                                           |
-| `abiFilters`            | `string[]`       | `['arm64-v8a']`      | 打包架构（真机 `arm64-v8a`,模拟器加 `x86_64`）                         |
-| `icon`                  | `string`         | `'./build/icon.png'` | 应用图标（建议 512×512 PNG）                                           |
-| `usesCleartextTraffic`  | `boolean`        | `true`               | 是否允许明文 HTTP                                                      |
-| `permissions`           | `string[]`       | `[]`                 | 额外权限（如 `'android.permission.CAMERA'`）                           |
+| 字段                    | 类型             | 默认                 | 说明                                                                                                      |
+| ----------------------- | ---------------- | -------------------- | --------------------------------------------------------------------------------------------------------- |
+| `sdkPath`               | `string \| null` | `null`               | Android SDK 路径（默认自动查找）                                                                          |
+| `adbPath`               | `string \| null` | `null`               | adb 路径（默认自动查找）                                                                                  |
+| `minSdkVersion`         | `int`            | `29`                 | 最低 SDK（29=Android 10.0）                                                                               |
+| `targetSdkVersion`      | `int`            | `36`                 | 目标 SDK                                                                                                  |
+| `compileSdkVersion`     | `int`            | `37`                 | 编译 SDK                                                                                                  |
+| `buildToolsVersion`     | `string`         | `'37.0.0'`           | 构建工具版本                                                                                              |
+| `abiFilters`            | `string[]`       | `['arm64-v8a']`      | 打包架构（真机 `arm64-v8a`,模拟器加 `x86_64`）                                                            |
+| `icon`                  | `string`         | `'./build/icon.png'` | 应用图标（建议 512×512 PNG）                                                                              |
+| `usesCleartextTraffic`  | `boolean`        | `true`               | 是否允许明文 HTTP                                                                                         |
+| `permissions`           | `string[]`       | `[]`                 | 额外权限（如 `'android.permission.CAMERA'`）                                                              |
 | `signing`               | `object`         | —                    | 自定义签名配置。**不填则用模板自带的 debug keystore 签名**（可安装测试，不可上架）；填则以下 4 项均为必填 |
-| `signing.keystore`      | `string`         | —                    | keystore 路径（相对你的项目根）                                        |
-| `signing.storePassword` | `string`         | —                    | keystore 密码                                                          |
-| `signing.keyAlias`      | `string`         | —                    | 密钥别名                                                               |
-| `signing.keyPassword`   | `string`         | —                    | 密钥密码（通常与 `storePassword` 相同）                                |
+| `signing.keystore`      | `string`         | —                    | keystore 路径（相对你的项目根）                                                                           |
+| `signing.storePassword` | `string`         | —                    | keystore 密码                                                                                             |
+| `signing.keyAlias`      | `string`         | —                    | 密钥别名                                                                                                  |
+| `signing.keyPassword`   | `string`         | —                    | 密钥密码（通常与 `storePassword` 相同）                                                                   |
 
 #### 生成自签名 keystore
 
@@ -405,8 +418,13 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**——拦截 `net
 
 `test` 打的是 debug 版,启动时**先尝试连 Metro**,失败后才 fallback 到内置 bundle;这个"等超时"是 RN debug 版的固有行为;
 
-- 需要**秒开**：用 `npx node-mobile-app build`
-- 需要**热更新**：`test` 保持 USB 连接
+拔线后的启动速度（从快到慢）：
+
+1. **`npx node-mobile-app build --release`** 打包后安装到手机——最快（release 版不连 Metro）
+2. **`npx node-mobile-app build`** 打包后安装到手机——次之（debug 版，会先尝试连 Metro 再回退）
+3. **`npx node-mobile-app test`** 后手动打开应用——最慢（同上，且 `test` 面向「连 USB 热更新」场景）
+
+若需要**热更新**，则保持 `test` 的 USB 连接。
 
 ### Q：`test` 装到手机后拔 USB 就崩？
 
