@@ -61,14 +61,33 @@ const ensureDir = dir => {
     fs.copyFileSync(src, dst);
     return true;
   },
+  // 把单个参数转成适合 Windows cmd.exe 的形式：含空白或 shell 元字符时加双引号。
+  quoteShellArg = (s) => {
+    const str = String(s);
+    if (str === '') return '""';
+    return /[\s"&|<>^()]/.test(str) ? '"' + str.replace(/"/g, '""') + '"' : str;
+  },
+  /**
+   * 统一的子进程启动：
+   * - Windows：.cmd / .bat 需经 shell；把命令与参数拼成单字符串，
+   *   避免 spawnSync(bin, args, { shell: true }) 触发 DEP0190。
+   * - 其它平台：不用 shell，参数交由 Node 转义。
+   */
+  spawnCmd = (bin, args, baseOpts = {}) => {
+    if (process.platform === 'win32') {
+      const cmd = [bin, ...args].map(quoteShellArg).join(' ');
+      return spawnSync(cmd, { ...baseOpts, shell: true });
+    }
+    return spawnSync(bin, args, { ...baseOpts, shell: false });
+  },
   run = (bin, args, opts = {}) => {
-    const r = spawnSync(bin, args, { stdio: 'inherit', shell: true, ...opts });
+    const r = spawnCmd(bin, args, { stdio: 'inherit', ...opts });
     if (r.status !== 0) throw new Error(`${bin} ${args.join(' ')} 退出码 ${r.status}`);
     return r;
   },
-  runQuiet = (bin, args, opts = {}) => spawnSync(bin, args, { encoding: 'utf-8', shell: true, ...opts }),
+  runQuiet = (bin, args, opts = {}) => spawnCmd(bin, args, { encoding: 'utf-8', ...opts }),
   runSilent = (bin, args, opts = {}) => {
-    const r = spawnSync(bin, args, { encoding: 'utf-8', shell: true, ...opts });
+    const r = spawnCmd(bin, args, { encoding: 'utf-8', ...opts });
     if (r.status !== 0) {
       if (r.stdout) process.stderr.write(r.stdout);
       if (r.stderr) process.stderr.write(r.stderr);
@@ -128,12 +147,10 @@ const ensureDir = dir => {
    * 生成 ESLint flat config 源码（替代 @react-native/eslint-config/flat）
    */
   buildEslintConfigSource = () => `import js from '@eslint/js';
-    import babelParser from '@babel/eslint-parser';
     import tsParser from '@typescript-eslint/parser';
     import tsPlugin from '@typescript-eslint/eslint-plugin';
-    import reactPlugin from 'eslint-plugin-react';
+    import reactPlugin from '@eslint-react/eslint-plugin';
     import reactHooks from 'eslint-plugin-react-hooks';
-    import reactNative from 'eslint-plugin-react-native';
     import prettier from 'eslint-config-prettier';
 
     export default [
@@ -141,19 +158,17 @@ const ensureDir = dir => {
       {
         files: ['**/*.{js,jsx,ts,tsx}'],
         languageOptions: {
-          parser: babelParser,
-          parserOptions: { requireConfigFile: false, babelOptions: { presets: ['module:@react-native/babel-preset'] } },
+          parser: tsParser,
+          parserOptions: { ecmaFeatures: { jsx: true }, sourceType: 'module' },
         },
-        plugins: { react: reactPlugin, 'react-hooks': reactHooks, 'react-native': reactNative },
-        settings: { react: { version: 'detect' } },
+        plugins: { ...reactPlugin.configs.recommended.plugins, 'react-hooks': reactHooks },
+        settings: { ...reactPlugin.configs.recommended.settings },
         rules: {
           ...reactPlugin.configs.recommended.rules,
           ...reactHooks.configs.recommended.rules,
-          'react/react-in-jsx-scope': 'off',
-          'react/prop-types': 'off',
         },
       },
-      { files: ['**/*.{ts,tsx}'], languageOptions: { parser: tsParser }, plugins: { '@typescript-eslint': tsPlugin },
+      { files: ['**/*.{ts,tsx}'], plugins: { '@typescript-eslint': tsPlugin },
        rules: tsPlugin.configs.recommended.rules }, prettier];`;
 
 export {
