@@ -21,6 +21,26 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
     removeDir(path.join(buildDir, 'android', 'app', 'build'));
     removeDir(path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native', 'android', 'build'));
   },
+  hashTemplate = templateDir => {
+    const h = crypto.createHash('sha256'),
+      walk = d => {
+        let entries;
+        try { entries = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
+        entries.sort((a, b) => a.name.localeCompare(b.name));
+        for (const e of entries) {
+          if (e.name === 'node_modules' || e.name === '.git') continue;
+          const full = path.join(d, e.name), rel = path.relative(templateDir, full).replace(/\\/g, '/');
+          if (e.isDirectory()) { h.update('D:' + rel + '|'); walk(full); }
+          else if (e.isFile()) {
+            h.update('F:' + rel + '|');
+            try { h.update(fs.readFileSync(full)); } catch { h.update('err'); }
+            h.update('|');
+          }
+        }
+      };
+    walk(templateDir);
+    return h.digest('hex');
+  },
   computeFingerprint = (userProjectDir, config, pkgRoot) => {
     const abiFilters = [...(config.android.abiFilters || [])].sort(), libnode = {},
       pluginDir = path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native'),
@@ -36,12 +56,9 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
       }
     }
 
-    let pluginVersion = null;
-    const pluginPkg = path.join(pluginDir, 'package.json');
+    let pluginVersion = null, cliVersion = null;
+    const pluginPkg = path.join(pluginDir, 'package.json'), cliPkg = path.join(pkgRoot, 'package.json');
     if (fs.existsSync(pluginPkg)) try { pluginVersion = JSON.parse(fs.readFileSync(pluginPkg, 'utf-8')).version; } catch { };
-
-    let cliVersion = null;
-    const cliPkg = path.join(pkgRoot, 'package.json');
     if (fs.existsSync(cliPkg)) try { cliVersion = JSON.parse(fs.readFileSync(cliPkg, 'utf-8')).version; } catch { };
 
     const depsHash = hashUserDeps(userProjectDir), a = config.android || {},
@@ -58,7 +75,8 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
         permissions: [...(a.permissions || [])].sort(),
       };
 
-    return { abiFilters, libnode, pluginVersion, cliVersion, depsHash, appInfo };
+    const templateHash = hashTemplate(path.join(pkgRoot, 'template'));
+    return { abiFilters, libnode, pluginVersion, cliVersion, depsHash, appInfo, templateHash };
   },
   checkAndResetCache = (buildDir, userProjectDir, config, pkgRoot) => {
     ensureDir(buildDir);
@@ -66,14 +84,15 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
     const fpFile = path.join(buildDir, FINGERPRINT_FILE), newFp = computeFingerprint(userProjectDir, config, pkgRoot);
     let oldFp = null;
     if (fs.existsSync(fpFile)) try { oldFp = JSON.parse(fs.readFileSync(fpFile, 'utf-8')); } catch { };
-    if (!oldFp) return console.log('  ✓ 首次构建,无缓存可清'), writeFp(fpFile, newFp);
+    if (!oldFp) return console.log('  ✓ 全新构建,无缓存可清'), writeFp(fpFile, newFp);
 
     const abiChanged = JSON.stringify(oldFp.abiFilters) !== JSON.stringify(newFp.abiFilters),
       libnodeChanged = JSON.stringify(oldFp.libnode) !== JSON.stringify(newFp.libnode),
       pluginChanged = oldFp.pluginVersion !== newFp.pluginVersion,
       cliChanged = oldFp.cliVersion !== newFp.cliVersion, depsChanged = oldFp.depsHash !== newFp.depsHash,
       appInfoChanged = JSON.stringify(oldFp.appInfo) !== JSON.stringify(newFp.appInfo),
-      structural = abiChanged || libnodeChanged || pluginChanged || cliChanged;
+      templateChanged = oldFp.templateHash !== newFp.templateHash,
+      structural = abiChanged || libnodeChanged || pluginChanged || cliChanged || templateChanged;
 
     if (structural) {
       const reasons = [];
@@ -81,6 +100,7 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
       if (libnodeChanged) reasons.push('libnode.so');
       if (pluginChanged) reasons.push('插件版本');
       if (cliChanged) reasons.push('CLI 版本');
+      if (templateChanged) reasons.push('模板文件');
       if (depsChanged) reasons.push('用户依赖');
       if (appInfoChanged) reasons.push('应用信息');
       console.log('  ⚠️  检测到变化（' + reasons.join('、') + '），清理全部缓存');

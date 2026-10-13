@@ -16,7 +16,7 @@ const SCHEME = 'MyApp',
    * 执行 pod install（若 Pods/ 已存在且 Podfile.lock 未变，cocoapods 会自动跳过）
    */
   podInstall = iosDir => {
-    console.log('  pod install ...'), run('pod', ['install'], { cwd: iosDir });
+    console.log('  pod install ...'), run('pod', ['install'], { cwd: iosDir, inherit: true });
   },
   /**
    * 把 config.ios.signing.certificate 导入临时 keychain，供 xcodebuild 签名用
@@ -39,23 +39,21 @@ const SCHEME = 'MyApp',
     // 清掉同名的旧 keychain（重复构建时）
     if (fs.existsSync(keychainPath)) fs.rmSync(keychainPath, { force: true });
     console.log('  创建临时 keychain 并导入证书 ...');
-    run('security', ['create-keychain', '-p', keychainPassword, keychainPath]);
-    run('security', ['set-keychain-settings', '-lut', '3600', keychainPath]);
-    run('security', ['unlock-keychain', '-p', keychainPassword, keychainPath]);
+    run('security', ['create-keychain', '-p', keychainPassword, keychainPath], { quiet: true });
+    run('security', ['set-keychain-settings', '-lut', '3600', keychainPath], { quiet: true });
+    run('security', ['unlock-keychain', '-p', keychainPassword, keychainPath], { quiet: true });
     run('security', [
       'import', certPath,
       '-k', keychainPath,
       '-P', signing.certificatePassword || '',
       '-T', '/usr/bin/codesign',
-      '-T', '/usr/bin/security',
-    ]);
+      '-T', '/usr/bin/security'
+    ], { quiet: true });
     run('security', [
       'set-key-partition-list',
       '-S', 'apple-tool:,apple:,codesign:',
-      '-s',
-      '-k', keychainPassword,
-      keychainPath,
-    ]);
+      '-s', '-k', keychainPassword, keychainPath
+    ], { quiet: true });
 
     return { keychainPath, keychainPassword };
   },
@@ -86,7 +84,7 @@ const SCHEME = 'MyApp',
     const keychain = setupSigningKeychain(buildDir, userProjectDir, config);
     if (keychain) args.push('OTHER_CODE_SIGN_FLAGS=--keychain ' + keychain.keychainPath);
 
-    console.log('  xcodebuild archive ...'), run('xcodebuild', args, { cwd: iosDir });
+    console.log('  xcodebuild archive ...'), run('xcodebuild', args, { cwd: iosDir, quiet: true });
     return archivePath;
   },
   /**
@@ -131,7 +129,7 @@ const SCHEME = 'MyApp',
       '-archivePath', archivePath,
       '-exportOptionsPlist', plistPath,
       '-exportPath', exportDir,
-    ], { cwd: iosDir });
+    ], { cwd: iosDir, quiet: true });
 
     // 找 .ipa
     const files = fs.readdirSync(exportDir).filter(f => f.endsWith('.ipa'));

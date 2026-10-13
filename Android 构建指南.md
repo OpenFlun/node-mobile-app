@@ -307,7 +307,7 @@ Remove-Item -Recurse -Force D:\你的项目\node-mobile-app-build
 Remove-Item -Recurse -Force D:\你的项目\node_modules\@flun\nodejs-mobile-react-native\android\.cxx
 Remove-Item -Recurse -Force D:\你的项目\node_modules\@flun\nodejs-mobile-react-native\android\build
 
-# 或删指纹文件（下次跑 = 首次构建）
+# 或删指纹文件（下次跑 = 全新构建）
 Remove-Item -Force D:\你的项目\node-mobile-app-build\.build-fingerprint.json
 ```
 

@@ -17,6 +17,7 @@
 - **增量构建**：文件指纹判断缓存,无变化时 10 秒级重跑
 - **跨平台**：Android（Windows / macOS / Linux）+ iOS（仅 macOS）
 - **离线可用**：`build` 打出的 APK / IPA 内置 JS,无需连电脑也能跑
+- **node_modules 优化（默认开启）**：构建时自动合并 JS、清平台二进制、清开发文件等，大幅减少打包文件数与体积、加速启动；无需配置
 
 ---
 
@@ -53,6 +54,7 @@
 │   ├── fingerprint.js            # 缓存指纹（判断是否需要清理构建缓存）
 │   ├── generate.js               # 生成 main.js（桥接）+ mobileApp.runtime.ts（运行时配置）
 │   ├── install.js                # 依赖安装 + 插件 abiFilters patch + WebView SSL patch
+│   ├── optimize-node-modules.js  # node_modules 优化（六阶段：合并 JS / 清资源 / 清平台二进制 / 清开发文件 / 清中间产物 / 清冗余）
 │   ├── patcher.js                # 应用信息 / Android / iOS 配置 patch
 │   ├── platform-ios.js           # iOS 构建（pod install / xcodebuild archive / export）
 │   ├── utils.js                  # 通用工具（文件操作 / 进程调用 / adb / hermesc 定位）
@@ -166,12 +168,13 @@ npx node-mobile-app build --release
 
 ### 常用选项
 
-| 选项            | 用途                                    |
-| --------------- | --------------------------------------- |
-| `--ios`         | 目标平台为 iOS（默认 Android）          |
-| `--release`     | 打 release 包（仅 `build`）             |
-| `--device <id>` | 指定设备（`test`）                      |
-| `--arch <abi>`  | 指定 ABI,逗号分隔（`build`,仅 Android） |
+| 选项            | 用途                                           |
+| --------------- | --------------------------------------------- |
+| `--ios`         | 目标平台为 iOS（默认 Android）                 |
+| `--release`     | 打 release 包（仅 `build`）                    |
+| `--device <id>` | 指定设备（`test`）                             |
+| `--arch <abi>`  | 指定 ABI,逗号分隔（`build`,仅 Android）        |
+| `--debug`       | 显示详细日志（优化各阶段明细、各命令完整输出） |
 
 ### 安装 APK 到手机
 
@@ -335,6 +338,32 @@ signing: {
 | `allowScripts` | 移动端 Node 环境里允许跑安装脚本的包（会写入 `nodejs-project/package.json`） |
 
 ---
+
+### node_modules 优化
+
+构建时自动优化 `node_modules`（默认开启，无需配置），减少打包文件数与体积、加速启动。
+
+| 字段      | 类型       | 默认   | 说明                                                          |
+| --------- | ---------- | ------ | ------------------------------------------------------------- |
+| `enabled` | `boolean`  | `true` | 是否启用优化                                                  |
+| `exclude` | `string[]` | `[]`   | 排除优化时异常或不想优化的包（写 `package.json` 的 `name`）   |
+
+**六阶段流程**：
+
+1. **合并 JS**：按包入口 bundle，多个 JS 文件合并为单文件（`bundled/` 目录）；
+2. **清空资源**：扫描各包 `postinstall` 引用的目录/文件，保留目录结构、清空内容；被 import/require 的保留；
+3. **清平台二进制**：按目标平台 + `abiFilters` 逐文件判定，删除非本机二进制；
+4. **清开发文件**：删除 `.md` / `.map` / `.d.ts` / `.h` / `.c` 等非运行文件；**原生模块包（含 `binding.gyp`）内的编译必需文件保留**；
+5. **清中间产物**；
+6. **清不参与运行的文件和空目录**。
+
+**缓存**：快照记录在 `node-mobile-app-build/.deps-snapshot.json`，构建时自动判断「重装并优化 / 仅优化 / 跳过」；改动模板或依赖会自动触发重编。
+
+**异常排查**：
+
+- `optimize: { enabled: false }` 整体关闭优化；
+- `optimize: { exclude: ['包名'] }` 排除优化时异常或不想优化的包；
+- 加 `--debug` 查看优化各阶段明细。
 
 ## 服务地址说明
 

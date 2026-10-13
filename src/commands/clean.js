@@ -8,8 +8,12 @@ const runClean = async () => {
     targets = [
       { label: '构建目录', path: buildDir },
       {
-        label: '插件 CMake 缓存', path: path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native', 'android',
-          '.cxx')
+        label: '插件构建缓存', path: path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native',
+          'android', 'build')
+      },
+      {
+        label: '插件 CMake 缓存', path: path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native',
+          'android', '.cxx')
       },
     ];
 

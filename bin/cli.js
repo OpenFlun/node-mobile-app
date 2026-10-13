@@ -6,18 +6,18 @@ import { runClean } from '../src/commands/clean.js';
 const HELP = `
 @flun/node-mobile-app
 
-用法:
-  node-mobile-app test              编译并安装到设备（开发调试）
-  node-mobile-app test --ios        同上，iOS（仅 macOS）
-  node-mobile-app build             打 APK
+指令:
+  node-mobile-app test              编译并安装到设备（Android，需连 USB，走 Metro 热更新）
+  node-mobile-app test --ios        iOS 版（仅 macOS）
+  node-mobile-app build             打 debug APK（Android，离线可用）
+  node-mobile-app build --release   打 release APK（Android，默认 debug keystore 签名，可安装）
   node-mobile-app build --ios       打 IPA（仅 macOS）
-  node-mobile-app clean             清理构建缓存
+  node-mobile-app clean             清理构建缓存（不限平台）
 
 选项:
-  --ios                目标平台为 iOS（默认 Android，仅 macOS 可执行）
-  --release            打 release 包（build）
-  --device <id>        指定设备（test）
-  --arch <abi>         指定 ABI，逗号分隔（build，仅 Android）
+  --device <id>   指定设备（仅 test）
+  --arch <abi>    指定 ABI，逗号分隔（仅 build，Android）
+  --debug         显示详细日志（所有指令通用）
 `,
 
   parseFlags = args => {
@@ -34,6 +34,7 @@ const HELP = `
 
   main = async () => {
     const [cmd, ...rest] = process.argv.slice(2), flags = parseFlags(rest);
+    if (flags.debug) process.env.OPTIMIZE_DEBUG = '1';
     try {
       if (cmd === 'test') await runTest(flags);
       else if (cmd === 'build') await runBuild(flags);

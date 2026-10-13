@@ -12,6 +12,8 @@
  *   npx node-mobile-app build --ios     打 IPA（仅 macOS）
  *   npx node-mobile-app clean           清理构建缓存
  *
+ *   任意命令加 --debug 可显示详细日志（优化各阶段明细、各命令完整输出）
+ *
  * ===== 服务地址说明 =====
  *   CLI 会自动识别 server.js 实际监听的协议和端口（拦截 listen 调用），
  *   App 使用该地址加载页面，无需在此配置。
@@ -112,6 +114,14 @@ export default {
   advanced: {
     keepAlive: true,                  // 是否发送心跳保持 Node.js 进程活跃
     heartbeatInterval: 5000,          // 心跳间隔(毫秒)
+  },
+
+  // ===== node_modules 优化 =====
+  // 构建时合并 JS + 清空已复制到项目根的资源 + 清平台二进制 + 清开发文件,加速启动
+  // 默认开启。若构建或运行异常,可按下述方式关闭或排除问题包
+  optimize: {
+    enabled: true,                     // 是否启用（默认 true）
+    // exclude: ['包名'],              // 排除优化时异常或不想优化的包（默认空）
   },
 
   // ===== 扩展点 =====

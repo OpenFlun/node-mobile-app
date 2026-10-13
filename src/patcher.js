@@ -4,26 +4,25 @@ import { writeIfChanged } from './utils.js';
 
 // 把字符串中所有非 ASCII 字符转成 \uXXXX（Java Properties 规范）
 // gradle.properties 按 ISO-8859-1 读取，无法改为 UTF-8
-const escapeProps = (s) =>
-  String(s).replace(/[^\x00-\x7F]/g, (ch) => '\\u' + ch.charCodeAt(0).toString(16).padStart(4, '0'));
-
-/**
- * 解析最终 appName：
- *   1. config.appName
- *   2. 用户项目 package.json 的 name
- *   3. 'MyApp'
- */
-const resolveAppName = (userProjectDir, config) => {
-  if (config.appName) return String(config.appName);
-  const pkgPath = path.join(userProjectDir, 'package.json');
-  if (fs.existsSync(pkgPath)) {
-    try {
-      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-      if (pkg.name) return String(pkg.name);
-    } catch { }
-  }
-  return 'MyApp';
-},
+const escapeProps = s =>
+  String(s).replace(/[^\x00-\x7F]/g, ch => '\\u' + ch.charCodeAt(0).toString(16).padStart(4, '0')),
+  /**
+   * 解析最终 appName：
+   *   1. config.appName
+   *   2. 用户项目 package.json 的 name
+   *   3. 'MyApp'
+   */
+  resolveAppName = (userProjectDir, config) => {
+    if (config.appName) return String(config.appName);
+    const pkgPath = path.join(userProjectDir, 'package.json');
+    if (fs.existsSync(pkgPath)) {
+      try {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+        if (pkg.name) return String(pkg.name);
+      } catch { }
+    }
+    return 'MyApp';
+  },
   /** 通用字符串转义基础：\\, ", \n, \r, \t */
   escapeStringBase = s => String(s)
     .replace(/\\/g, '\\\\')
@@ -53,8 +52,7 @@ const resolveAppName = (userProjectDir, config) => {
   patchAppConfig = (buildDir, userProjectDir, config) => {
     const appName = resolveAppName(userProjectDir, config), appId = config.appId,
       versionCode = config.versionCode, versionName = config.versionName,
-      gradleFile = path.join(buildDir, 'android', 'app', 'build.gradle'),
-      appJsonFile = path.join(buildDir, 'app.json'),
+      gradleFile = path.join(buildDir, 'android', 'app', 'build.gradle'), appJsonFile = path.join(buildDir, 'app.json'),
       stringsFile = path.join(buildDir, 'android', 'app', 'src', 'main', 'res', 'values', 'strings.xml'),
       ktFiles = [
         path.join(buildDir, 'android', 'app', 'src', 'main', 'java', 'com', 'myapp', 'MainActivity.kt'),
@@ -384,7 +382,6 @@ const resolveAppName = (userProjectDir, config) => {
     console.log(`  ✓ iOS 图标已应用: ${path.basename(iconAbs)}`);
   }
 
-// ===== 导出 =====
 export {
   resolveAppName, escapeKotlinString, escapeSwiftString, patchAppConfig, patchAndroidConfig, patchSigning,
   patchIcon, patchIosConfig, patchIosIcon

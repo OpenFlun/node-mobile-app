@@ -80,9 +80,22 @@ const ensureDir = dir => {
     }
     return spawnSync(bin, args, { ...baseOpts, shell: false });
   },
+  /**
+   * 执行命令：默认实时输出（inherit）；quiet=true 时捕获输出，成功静默、失败才打印
+   */
   run = (bin, args, opts = {}) => {
-    const r = spawnCmd(bin, args, { stdio: 'inherit', ...opts });
-    if (r.status !== 0) throw new Error(`${bin} ${args.join(' ')} 退出码 ${r.status}`);
+    const { quiet, ...restOpts } = opts;
+    if (!quiet) {
+      const r = spawnCmd(bin, args, { stdio: 'inherit', ...restOpts });
+      if (r.status !== 0) throw new Error(`${bin} ${args.join(' ')} 退出码 ${r.status}`);
+      return r;
+    }
+    const r = spawnCmd(bin, args, { encoding: 'utf-8', ...restOpts });
+    if (r.status !== 0) {
+      if (r.stdout) process.stderr.write(r.stdout);
+      if (r.stderr) process.stderr.write(r.stderr);
+      throw new Error(`${bin} ${args.join(' ')} 退出码 ${r.status}`);
+    }
     return r;
   },
   runQuiet = (bin, args, opts = {}) => spawnCmd(bin, args, { encoding: 'utf-8', ...opts }),

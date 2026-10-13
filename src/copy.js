@@ -34,7 +34,7 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
   copyDirIncremental = (src, dst, exclude) => {
     ensureDir(dst);
 
-    const dstKeep = new Set(['node_modules', '.deps-hash', 'main.js', 'package.json', 'package-lock.json']),
+    const dstKeep = new Set(['node_modules', 'main.js', 'package.json', 'package-lock.json']),
       srcNames = new Set(fs.readdirSync(src));
     // 1. 删除 dst 里不该存在的条目
     for (const name of fs.readdirSync(dst)) {
@@ -66,36 +66,23 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     if (!fs.existsSync(buildPkgPath)) return;
     const mainPkgPath = path.join(pkgRoot, 'package.json');
     if (!fs.existsSync(mainPkgPath)) return;
-
-    const buildPkg = readJson(buildPkgPath);
-    const mainPkg = readJson(mainPkgPath);
+    const buildPkg = readJson(buildPkgPath), mainPkg = readJson(mainPkgPath);
     if (!buildPkg.dependencies) return;
 
-    const mainDeps = mainPkg.dependencies || {};
-    const missing = [];
-    let depsUpdated = 0;
-    let needWrite = false;
+    const mainDeps = mainPkg.dependencies || {}, missing = [];
+    let depsUpdated = 0, needWrite = false;
 
     // 移除仅用于模板占位说明的 _comment 字段，避免带进最终 build 工程
-    if ('_comment' in buildPkg) {
-      delete buildPkg._comment;
-      needWrite = true;
-    }
+    if ('_comment' in buildPkg) delete buildPkg._comment, needWrite = true;
     for (const name of Object.keys(buildPkg.dependencies)) {
       const v = mainDeps[name];
       if (!v) { missing.push(name); continue; }
-      if (buildPkg.dependencies[name] !== v) {
-        buildPkg.dependencies[name] = v;
-        depsUpdated++;
-        needWrite = true;
-      }
+      if (buildPkg.dependencies[name] !== v) buildPkg.dependencies[name] = v, depsUpdated++, needWrite = true;
     }
 
     if (needWrite) {
       writeIfChanged(buildPkgPath, JSON.stringify(buildPkg, null, 2) + '\n');
-      if (depsUpdated > 0) {
-        console.log('  ✓ 已同步 ' + depsUpdated + ' 个依赖版本到 ' + BUILD_DIR_NAME + '/package.json');
-      }
+      if (depsUpdated > 0) console.log('  ✓ 已同步 ' + depsUpdated + ' 个依赖版本到 ' + BUILD_DIR_NAME + '/package.json');
     }
 
     if (missing.length > 0) {
@@ -245,10 +232,8 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     const buildPkgPath = path.join(buildDir, 'package.json');
     if (!fs.existsSync(buildPkgPath)) return console.warn('  ⚠️  未找到 buildDir/package.json,跳过 extraRnDependencies');
 
-    const buildPkg = readJson(buildPkgPath);
+    const buildPkg = readJson(buildPkgPath), missing = [];
     if (!buildPkg.dependencies) buildPkg.dependencies = {};
-
-    const missing = [];
     let added = 0;
     for (const name of extras) {
       const pkgJson = path.join(userProjectDir, 'node_modules', name, 'package.json');

@@ -29,7 +29,8 @@ const DEFAULT_CONFIG = {
     abiFilters: ['arm64-v8a'],
     icon: './build/icon.png',
     usesCleartextTraffic: true,
-    permissions: [],    signing: {},
+    permissions: [],
+    signing: {},
   },
   ios: {
     deploymentTarget: '15.1',
@@ -48,6 +49,10 @@ const DEFAULT_CONFIG = {
     '*.log', '*.md', '*.tgz', '*.bak', '.backup*', 'dist/', 'out/', 'build/', 'tests/',
     'node-mobile-app-build/', 'nodejs-assets/',
   ],
+  optimize: {
+    enabled: true,
+    exclude: [],
+  },
   allowScripts: {
     'node': true,
   }
