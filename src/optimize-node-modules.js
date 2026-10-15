@@ -190,6 +190,9 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
             if (excludePkgs.has(relName)) { skipped++; continue; }
             if (SKIP_PKGS.has(relName)) { skipped++; continue; }
             if (hasNativeModule(pkgDir)) { skipped++; continue; }
+            // 删除安装期脚本字段：运行时无安装期，且 Gradle npm rebuild 会触发脚本导致失败
+            // 原生模块包已在上一步跳过（其 scripts 是编译必需，必须保留）
+            if (j.scripts) { delete j.scripts; fs.writeFileSync(pj, JSON.stringify(j, null, 2)); }
             if (countJS(pkgDir) <= 1) { skipped++; continue; }
             // 已优化过的包跳过
             const mainStr = String(j.main || ''), exportsStr = JSON.stringify(j.exports || '');
@@ -285,8 +288,6 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
                 j.main = isESM ? newExports['.'] : (newExports['.'].require || newExports['.'].default || newExports['.']);
             else delete j.main;
             if (isESM && j.main) j.module = j.main;
-            // 删除安装期脚本字段：移动端 Gradle 会 npm rebuild，触发 postinstall；运行时无安装期，scripts 无用
-            delete j.scripts;
             fs.writeFileSync(pj, JSON.stringify(j, null, 2));
 
             // 删除原 JS
