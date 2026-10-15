@@ -1,4 +1,8 @@
 # 变更日志
+## [3.1.2] - 2026-10-15 21:05
+### 修复
+- 修复了 "src\optimize-node-modules.js" 中 prunePlatform 函数一些边界问题;
+
 ## [3.1.1] - 2026-10-15 20:29
 ### 更新
 - 同步更新了一些依赖包;
@@ -12,33 +16,3 @@
 - **合并阶段日志标题**：由「处理 JS 资源(用到则合并,未用到则提前清除)」改为「处理保留的资源 JS（被引用则合并，否则删除）」，与新流程呼应；
 - **Gradle 原生编译报 postinstall 失败（重要）**：Gradle 编译原生模块时执行 `npm rebuild`，会触发各包 postinstall；而合并阶段已删除脚本文件，导致 `Cannot find module ... copy-files.js`、构建失败；现合并阶段同步**删除 `package.json` 的 `scripts` 字段**（运行时无安装期，scripts 无用），rebuild 不再触发；
 - **`--debug` 下 `quiet` 命令仍被静默**：`run` 的 quiet 分支未判断 debug，导致 `--debug` 时 `gradlew` / `xcodebuild` 等命令输出仍被吞；现改为「debug 时忽略 quiet，全量输出」（不影响默认模式下 test 的精简行为）；
-
-## [3.0.0] - 2026-10-13 21:19
-### 新增
-- **node_modules 优化系统（默认开启）**：构建时自动执行六阶段优化，大幅减少打包文件数、加速启动。不改变项目源码，对任意 Node.js 项目通用；
-  - **阶段 1 合并 JS**：按包入口 bundle，多个 JS 文件合并为单文件（`bundled/` 目录下的 `.cjs` / `.mjs`）；CJS 保持 CJS、ESM 保持 ESM；
-  - **阶段 2 清空资源**：扫描各包 `postinstall` 引用的目录/文件，保留目录结构、清空内容；被 import/require 的保留不删；
-  - **阶段 3 清平台二进制**：按目标平台 + `abiFilters` 逐文件判定，删除非本机二进制（三层识别：目录名、文件后缀、文件头魔数）；
-  - **阶段 4 清开发文件**：删除 `.md` / `.map` / `.d.ts` / `.h` / `.c` 等非运行文件；**原生模块包（含 `binding.gyp`）内的编译必需文件保留**，确保原生编译通过；
-  - **阶段 5 清中间产物**；**阶段 6 清不参与运行的文件和空目录**；
-- **优化缓存（快照 + 指纹）**：`.deps-snapshot.json` 记录依赖、目标平台、架构、运行时 Node 主版本、优化代码指纹、上次构建是否完成；
-  - 构建时自动判断并执行三种动作：**重装依赖并优化** / **仅优化** / **跳过**，日志说明当次动作与原因；
-  - 运行时 Node 主版本从 `libnode/include/node/node_version.h` 读取（读不到则报错退出）；
-- **模板指纹**：`template/` 目录内容纳入缓存指纹，模板改动自动触发重编；
-- **`--debug` 调试开关**：`npx node-mobile-app build --debug` / `test --debug` 显示优化各阶段明细与各命令完整输出；
-- **优化逃生舱口**（`mobileAppConfig.js`）：`optimize: { enabled: false }` 整体关闭优化；`optimize: { exclude: ['包名'] }` 精确排除特定包；
-- **构建进度提示**：默认模式在打包阶段显示「打包进行中...」，避免长时间无输出被误认为卡死；`--debug` 下输出已完整，无需此提示；
-
-### 修复
-- **`bundled` 目录在 APK 中丢失（重要）**：aapt2 默认过滤 `<dir>_*`，原产物目录名以下划线开头，被打包时整体丢弃，应用启动报 `Node assets copy failed`；产物目录改用 `bundled`，绕开该过滤；
-- **scripts 引用保护过宽**：原逻辑保护 `package.json` `scripts` 引用的所有 js（含 test / lint），但移动端无安装期、这些脚本永不执行；移除该保护，测试脚本等被正常清理；
-- **`run` 输出策略**：`run` 默认实时输出（inherit）；新增 `quiet` 参数——捕获输出、成功静默、失败才打印，用于 `gradlew` / `xcodebuild` 等命令；
-- **`clean` 清理不完整**：原只清 `node-mobile-app-build` 与插件 `.cxx`，现补上插件 `android/build`，确保清环境彻底；
-
-### 升级注意事项
-- **3.0.0 起 node_modules 优化默认开启**，无需配置即享优化收益；
-- **升级后首次构建**会重装依赖并执行优化，比平时慢；后续构建命中缓存后无额外开销；
-- 若**构建或运行异常**，按以下顺序排查：
-  1. 在 `mobileAppConfig.js` 中设置 `optimize: { enabled: false }` 关闭优化，验证是否为优化引起；
-  2. 若确认是某个包合并后异常，用 `optimize: { exclude: ['包名'] }` 排除优化时异常或不想优化的包；
-  3. 若需彻底重来，删除 `node-mobile-app-build` 目录后重新构建。

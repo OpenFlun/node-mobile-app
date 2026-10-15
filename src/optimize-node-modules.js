@@ -406,11 +406,16 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
     prunePlatform = async (nmDir, myPlat, myArch) => {
         let removed = 0;
         const readHead = file => {
+            let fd;
             try {
-                const fd = fs.openSync(file, 'r'), buf = Buffer.alloc(512), n = fs.readSync(fd, buf, 0, 512, 0);
-                fs.closeSync(fd);
-                return n > 0 ? buf.slice(0, n) : null;
-            } catch { return null; }
+                fd = fs.openSync(file, 'r');
+                const buf = Buffer.alloc(512), n = fs.readSync(fd, buf, 0, 512, 0);
+                return n > 0 ? buf.subarray(0, n) : null;
+            } catch {
+                return null;
+            } finally {
+                if (fd !== undefined) fs.closeSync(fd);
+            }
         },
             sniffPlat = buf => {
                 if (!buf || buf.length < 4) return null;
