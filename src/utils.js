@@ -85,7 +85,7 @@ const ensureDir = dir => {
    */
   run = (bin, args, opts = {}) => {
     const { quiet, ...restOpts } = opts;
-    if (!quiet) {
+    if (!quiet || process.env.OPTIMIZE_DEBUG) {
       const r = spawnCmd(bin, args, { stdio: 'inherit', ...restOpts });
       if (r.status !== 0) throw new Error(`${bin} ${args.join(' ')} 退出码 ${r.status}`);
       return r;

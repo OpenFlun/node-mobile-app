@@ -17,7 +17,7 @@
 - **增量构建**：文件指纹判断缓存,无变化时 10 秒级重跑
 - **跨平台**：Android（Windows / macOS / Linux）+ iOS（仅 macOS）
 - **离线可用**：`build` 打出的 APK / IPA 内置 JS,无需连电脑也能跑
-- **node_modules 优化（默认开启）**：构建时自动合并 JS、清平台二进制、清开发文件等，大幅减少打包文件数与体积、加速启动；无需配置
+- **node_modules 优化（默认开启）**：构建时自动执行六阶段优化——先清空 postinstall 资源（保留 js 供合并）、再合并 JS、清平台二进制、清开发文件（原生模块编译必需文件保留）、清中间产物、清冗余与空目录；大幅减少打包文件数与体积、加速启动，无需配置
 
 ---
 
@@ -54,7 +54,7 @@
 │   ├── fingerprint.js            # 缓存指纹（判断是否需要清理构建缓存）
 │   ├── generate.js               # 生成 main.js（桥接）+ mobileApp.runtime.ts（运行时配置）
 │   ├── install.js                # 依赖安装 + 插件 abiFilters patch + WebView SSL patch
-│   ├── optimize-node-modules.js  # node_modules 优化（六阶段：合并 JS / 清资源 / 清平台二进制 / 清开发文件 / 清中间产物 / 清冗余）
+│   ├── optimize-node-modules.js  # node_modules 优化（六阶段：清资源 / 合并 JS / 清平台二进制 / 清开发文件 / 清中间产物 / 清冗余）
 │   ├── patcher.js                # 应用信息 / Android / iOS 配置 patch
 │   ├── platform-ios.js           # iOS 构建（pod install / xcodebuild archive / export）
 │   ├── utils.js                  # 通用工具（文件操作 / 进程调用 / adb / hermesc 定位）
@@ -350,8 +350,8 @@ signing: {
 
 **六阶段流程**：
 
-1. **合并 JS**：按包入口 bundle，多个 JS 文件合并为单文件（`bundled/` 目录）；
-2. **清空资源**：扫描各包 `postinstall` 引用的目录/文件，保留目录结构、清空内容；被 import/require 的保留；
+1. **清空资源**：扫描各包 `postinstall` 引用的目录/文件，保留目录结构、清空内容；js 文件一律保留，留待合并阶段处理；
+2. **合并 JS**：按包入口 bundle，多个 JS 文件合并为单文件（`bundled/` 目录）；合并后同步删除 `package.json` 的 `scripts` 字段（运行时无安装期，且 Gradle `npm rebuild` 会触发脚本导致失败）；
 3. **清平台二进制**：按目标平台 + `abiFilters` 逐文件判定，删除非本机二进制；
 4. **清开发文件**：删除 `.md` / `.map` / `.d.ts` / `.h` / `.c` 等非运行文件；**原生模块包（含 `binding.gyp`）内的编译必需文件保留**；
 5. **清中间产物**；
@@ -363,7 +363,7 @@ signing: {
 
 - `optimize: { enabled: false }` 整体关闭优化；
 - `optimize: { exclude: ['包名'] }` 排除优化时异常或不想优化的包；
-- 加 `--debug` 查看优化各阶段明细。
+- 加 `--debug` 查看优化各阶段明细与各命令完整输出。
 
 ## 服务地址说明
 

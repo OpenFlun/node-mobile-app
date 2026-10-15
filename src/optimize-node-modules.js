@@ -33,35 +33,33 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
         old.platform = targetPlatform, old.abiFilters = abiFilters, old.runtimeMajor = runtimeMajor;
         old.optimizeHash = SELF_HASH, old.verified = false, old.optimized = true;
         fs.writeFileSync(p, JSON.stringify(old, null, 2));
-    };
-
-
-// ==================== 扫描工具 ====================
-const findPackages = dir => {
-    const result = [];
-    if (!fs.existsSync(dir)) return result;
-    for (const entry of fs.readdirSync(dir)) {
-        if (entry === '.bin' || entry.startsWith('.')) continue;
-        const full = path.join(dir, entry);
-        if (!fs.statSync(full).isDirectory()) continue;
-        if (entry === NM_DIR) { result.push(...findPackages(full)); continue; }
-        if (entry.startsWith('@')) {
-            for (const sub of fs.readdirSync(full)) {
-                const pkgDir = path.join(full, sub);
-                if (fs.statSync(pkgDir).isDirectory()) {
-                    result.push(pkgDir);
-                    const nested = path.join(pkgDir, NM_DIR);
-                    if (fs.existsSync(nested)) result.push(...findPackages(nested));
+    },
+    // ==================== 扫描工具 ====================
+    findPackages = dir => {
+        const result = [];
+        if (!fs.existsSync(dir)) return result;
+        for (const entry of fs.readdirSync(dir)) {
+            if (entry === '.bin' || entry.startsWith('.')) continue;
+            const full = path.join(dir, entry);
+            if (!fs.statSync(full).isDirectory()) continue;
+            if (entry === NM_DIR) { result.push(...findPackages(full)); continue; }
+            if (entry.startsWith('@')) {
+                for (const sub of fs.readdirSync(full)) {
+                    const pkgDir = path.join(full, sub);
+                    if (fs.statSync(pkgDir).isDirectory()) {
+                        result.push(pkgDir);
+                        const nested = path.join(pkgDir, NM_DIR);
+                        if (fs.existsSync(nested)) result.push(...findPackages(nested));
+                    }
                 }
+            } else {
+                result.push(full);
+                const nested = path.join(full, NM_DIR);
+                if (fs.existsSync(nested)) result.push(...findPackages(nested));
             }
-        } else {
-            result.push(full);
-            const nested = path.join(full, NM_DIR);
-            if (fs.existsSync(nested)) result.push(...findPackages(nested));
         }
-    }
-    return result;
-},
+        return result;
+    },
     hasNativeModule = dir => {
         let found = false;
         const walk = d => {
@@ -287,6 +285,8 @@ const findPackages = dir => {
                 j.main = isESM ? newExports['.'] : (newExports['.'].require || newExports['.'].default || newExports['.']);
             else delete j.main;
             if (isESM && j.main) j.module = j.main;
+            // 删除安装期脚本字段：移动端 Gradle 会 npm rebuild，触发 postinstall；运行时无安装期，scripts 无用
+            delete j.scripts;
             fs.writeFileSync(pj, JSON.stringify(j, null, 2));
 
             // 删除原 JS
@@ -315,7 +315,7 @@ const findPackages = dir => {
         }
 
         if (resLog && resLog.length > 0) {
-            console.log('  处理 JS 资源(用到则合并,未用到则提前清除):');
+            console.log('  处理保留的资源 JS（被引用则合并，否则删除）:');
             for (const line of resLog) console.log(line);
         }
         return { merged, skipped, totalDeleted };
@@ -363,20 +363,17 @@ const findPackages = dir => {
         return [...new Set(items)];
     },
     clearItem = (p, refs) => {
+        let n = 0;
         const st = fs.statSync(p);
         if (st.isDirectory()) {
             for (const f of fs.readdirSync(p)) {
                 const full = path.join(p, f), sub = fs.statSync(full);
-                if (sub.isDirectory()) clearItem(full, refs);
-                else {
-                    if (refs.has(full)) continue;
-                    fs.rmSync(full, { force: true });
-                }
+                if (sub.isDirectory()) n += clearItem(full, refs);
+                else if (!JS_RE.test(f) && !refs.has(full)) try { fs.rmSync(full, { force: true }), n++; } catch { }
             }
-        } else {
-            if (refs.has(p)) return;
-            fs.writeFileSync(p, '');
         }
+        else if (!JS_RE.test(path.basename(p)) && !refs.has(p)) fs.writeFileSync(p, ''), n++;
+        return n;
     },
     clearResources = async (nmDir, excludePkgs) => {
         const refs = collectReferencedFiles(nmDir);
@@ -396,8 +393,10 @@ const findPackages = dir => {
                 const scriptAbs = path.resolve(pkgDir, scriptRel);
                 if (!fs.existsSync(scriptAbs)) continue;
                 const code = fs.readFileSync(scriptAbs, 'utf8'), items = extractResources(pkgDir, code);
-                for (const item of items)
-                    try { clearItem(path.join(pkgDir, item), refs), cleared++, pkgItems.push(item); } catch { }
+                for (const item of items) {
+                    const cnt = clearItem(path.join(pkgDir, item), refs);
+                    if (cnt > 0) cleared += cnt, pkgItems.push(`${item}(${cnt})`);
+                }
             }
             if (process.env.OPTIMIZE_DEBUG && pkgItems.length > 0) console.log(`  ✓ ${pkgRel}: ${pkgItems.join(', ')}`);
         }
@@ -586,8 +585,22 @@ const findPackages = dir => {
 
 // ==================== 导出函数 ====================
 /**
- * 标记快照 verified=true（构建全流程成功后由 build.js / test.js 调用）
+ * 清除快照中的 verified 标记（优化开始或构建失败时调用）
  * >查看定义:@see {@link clearVerified}
+ * @param {string} snapshotDir 快照目录
+ * @returns {Promise<void>}
+ */
+const clearVerified = async snapshotDir => {
+    const p = path.join(snapshotDir, SNAPSHOT_FILE);
+    if (!fs.existsSync(p)) return;
+    try {
+        const old = JSON.parse(fs.readFileSync(p, 'utf-8'));
+        if (old.verified !== false) old.verified = false, fs.writeFileSync(p, JSON.stringify(old, null, 2));
+    } catch { }
+};
+/**
+ * 标记快照 verified=true（构建全流程成功后由 build.js / test.js 调用）
+ * >查看定义:@see {@link markVerified}
  * @param {string} snapshotDir 快照目录
  * @returns {Promise<void>}
  */
@@ -601,7 +614,7 @@ const markVerified = async snapshotDir => {
 };
 /**
  * 执行 node_modules 六阶段优化
- * >查看定义:@see {@link SELF_HASH}
+ * >查看定义:@see {@link optimizeNodeModules}
  * @param {string} tempDir node_modules 所在目录（nodejs-assets/nodejs-project）
  * @param {object} [config] 优化配置
  * @param {string} [config.snapshotDir] 快照目录（默认同 tempDir）
@@ -615,28 +628,27 @@ const optimizeNodeModules = async (tempDir, config = {}) => {
     const targetPlatform = config.targetPlatform || 'android', abiFilters = config.abiFilters || ['arm64-v8a'],
         runtimeMajor = config.runtimeMajor, excludePkgs = new Set(config.exclude || []),
         nmDir = path.join(tempDir, NM_DIR), snapshotDir = config.snapshotDir || tempDir,
-        snapPath = path.join(snapshotDir, SNAPSHOT_FILE),
-        myPlat = TARGET_PLAT_MAP[targetPlatform] || [],
+        snapPath = path.join(snapshotDir, SNAPSHOT_FILE), myPlat = TARGET_PLAT_MAP[targetPlatform] || [],
         myArch = targetPlatform === 'ios' ? IOS_ARCHES : (abiFilters || []).map(a => ABI_ARCH_MAP[a]).filter(Boolean);
-    if (!runtimeMajor) throw new Error('optimizeNodeModules 缺少 config.runtimeMajor（应从 libnode/node_version.h 读取）');
 
+    if (!runtimeMajor) throw new Error('optimizeNodeModules 缺少 config.runtimeMajor（应从 libnode/node_version.h 读取）');
     if (!fs.existsSync(nmDir)) {
         console.log('[优化] node_modules 不存在,跳过');
         return { skipped: true };
     }
+
     await clearVerified(snapshotDir);  // 执行优化前清 verified,构建成功后再由 build.js / test.js 写回 true
-    const t0 = Date.now(),
-        nativePkgs = findPackages(nmDir).filter(p => fs.existsSync(path.join(p, 'binding.gyp')));
+    const t0 = Date.now(), nativePkgs = findPackages(nmDir).filter(p => fs.existsSync(path.join(p, 'binding.gyp')));
     try {
-        // 阶段1: 合并
-        console.log('  [1/6] 合并 JS...');
+        // 阶段1: 清空资源（跳过 js，留待合并阶段处理）
+        console.log('  [1/6] 清空复制到项目根的资源...');
+        const c = await clearResources(nmDir, excludePkgs);
+        console.log(`    清空 ${c} 个文件（js 文件保留，留待合并阶段处理）`);
+
+        // 阶段2: 合并
+        console.log('  [2/6] 合并 JS...');
         const m = await mergeAll(nmDir, excludePkgs, runtimeMajor);
         console.log(`    合并 ${m.merged} 包,跳过 ${m.skipped},删 ${m.totalDeleted} 个 JS`);
-
-        // 阶段2: 清空资源
-        console.log('  [2/6] 清空复制到项目根的资源...');
-        const c = await clearResources(nmDir, excludePkgs);
-        console.log(`    清空 ${c} 项`);
 
         // 阶段3: 清平台二进制
         console.log('  [3/6] 清理非当前平台二进制...');
@@ -671,22 +683,8 @@ const optimizeNodeModules = async (tempDir, config = {}) => {
     }
 };
 /**
- * 清除快照中的 verified 标记（优化开始或构建失败时调用）
- * >查看定义:@see {@link markVerified}
- * @param {string} snapshotDir 快照目录
- * @returns {Promise<void>}
- */
-const clearVerified = async snapshotDir => {
-    const p = path.join(snapshotDir, SNAPSHOT_FILE);
-    if (!fs.existsSync(p)) return;
-    try {
-        const old = JSON.parse(fs.readFileSync(p, 'utf-8'));
-        if (old.verified !== false) old.verified = false, fs.writeFileSync(p, JSON.stringify(old, null, 2));
-    } catch { }
-};
-/**
  * 当前优化文件的 SHA256 前 16 位（缓存指纹:优化代码一改,缓存自动失效）
- * >查看定义:@see {@link optimizeNodeModules}
+ * >查看定义:@see {@link SELF_HASH}
  */
 const SELF_HASH = (() => {
     try {
@@ -695,4 +693,4 @@ const SELF_HASH = (() => {
     } catch { return 'unknown'; }
 })();
 
-export { markVerified, optimizeNodeModules, clearVerified, SELF_HASH };
+export { clearVerified, markVerified, optimizeNodeModules, SELF_HASH };

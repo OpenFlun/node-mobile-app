@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { run } from './utils.js';
-import { optimizeNodeModules, clearVerified, SELF_HASH } from './optimize-node-modules.js';
+import { clearVerified, optimizeNodeModules, SELF_HASH } from './optimize-node-modules.js';
 const
   /**
    * 内部：从 libnode 的 node_version.h 读取运行时 Node 主版本号
