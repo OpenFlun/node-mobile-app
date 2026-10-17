@@ -476,6 +476,16 @@ adb logcat | grep -E "NODEJS-MOBILE|ReactNativeJS"
 - 请检查 你的 'package.json' 中 "allowScripts" 字段
 
 
+### Q：Android 构建卡在拉取依赖（`react-android` / `hermes-android` 等）？
+
+Android 模板的 `settings.gradle` 与 `build.gradle` 已在 `google()` / `mavenCentral()` 之前插入阿里云镜像，国内网络优先走镜像；海外网络镜像不命中会自动回退官方源，不影响功能。
+
+若仍卡住：
+
+- 检查镜像可达：浏览器打开 `https://maven.aliyun.com/repository/public` 是否正常；
+- 检查本机 `~/.gradle/init.gradle` 是否有与仓库顺序冲突的配置（如强制替换仓库），有则临时移除以排除干扰；
+- 停掉残留 Daemon 后重试：在 `node-mobile-app-build/android/` 下执行 `gradlew --stop`，再重跑 `test` / `build`。
+
 ### Q：Express 版本怎么选？
 
 - **Android**：内置完整 ICU（full-icu）→ 可以用 Express 5

@@ -4,6 +4,7 @@ import {
   ensureDir, removeDir, readJson, isExcluded, copyFileIfChanged, writeIfChanged, buildEslintConfigSource
 } from './utils.js';
 import { resolveSdkPath } from './config.js';
+import { createRequire } from 'module';
 
 const BUILD_DIR_NAME = 'node-mobile-app-build',
   TEMPLATE_EXCLUDE = [
@@ -95,6 +96,54 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     }
   },
   /**
+   * 把主包 node_modules 里被 npm 嵌套（未提升到用户根）的依赖，按需链接到用户根 node_modules 下，
+   * 让 RN CLI / Metro 从用户根也能解析到它们。
+   * - 判据：从用户根视角解析不到，才建链接；能解析则跳过；
+   * - 范围：遍历主包 node_modules 顶层全部条目（含 @scope/ 下每个子项），不列举任何包名；
+   * - 落点：只在用户根 node_modules 缺失条目时建 symlink，不覆盖已有内容、不碰 package.json / package-lock.json；
+   * - 建链接失败：中断报错，不静默。
+   */
+  linkNestedDeps = (pkgRoot, buildDir) => {
+    const pkgNm = path.join(pkgRoot, 'node_modules');
+    if (!fs.existsSync(pkgNm)) return;
+
+    const userProjectDir = path.dirname(buildDir),
+      userNm = path.join(userProjectDir, 'node_modules'),
+      req = createRequire(path.join(userProjectDir, 'index.js')),
+      candidates = [];
+    for (const entry of fs.readdirSync(pkgNm, { withFileTypes: true })) {
+      if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+      if (entry.name.startsWith('@')) {
+        const scopeDir = path.join(pkgNm, entry.name);
+        for (const sub of fs.readdirSync(scopeDir, { withFileTypes: true }))
+          if (sub.isDirectory()) candidates.push(entry.name + '/' + sub.name);
+      } else candidates.push(entry.name);
+    }
+
+    let linked = 0;
+    for (const name of candidates) {
+      try { req.resolve(name); continue; } catch { /* 解析不到，进入兜底 */ }
+      const src = path.join(pkgNm, name);
+      if (!fs.existsSync(src)) continue;
+      const realSrc = fs.realpathSync(src), dst = path.join(userNm, name);
+      let occupied = false;
+      try { fs.lstatSync(dst); occupied = true; } catch { /* 不存在 */ }
+      if (occupied) continue;
+      ensureDir(path.dirname(dst));
+      try {
+        fs.symlinkSync(realSrc, dst, 'junction');
+        linked++;
+      } catch (err) {
+        throw new Error(
+          '建立兜底链接失败：' + dst + ' -> ' + realSrc + '\n' +
+          '      原因：' + err.message + '\n' +
+          '      请检查 node_modules 是否被其它程序占用后重试'
+        );
+      }
+    }
+    if (linked > 0) console.log('  ✓ 已兜底链接 ' + linked + ' 个嵌套依赖到用户根 node_modules');
+  },
+  /**
    * 把 CLI 包里的 template/ 逐文件覆盖到 build 目录
    * - 只覆盖模板里存在的文件，不删除 buildDir 里已有的其他内容（保留 Gradle 增量缓存）
    * - 模板文件被改写时自动同步；新增文件自动添加
@@ -110,6 +159,7 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     copyDirOverwrite(templateDir, buildDir, TEMPLATE_EXCLUDE, buildDir, keepSet);
     fs.writeFileSync(path.join(buildDir, 'eslint.config.js'), buildEslintConfigSource(), 'utf-8');
     syncTemplateDependencies(pkgRoot, buildDir);
+    linkNestedDeps(pkgRoot, buildDir);
     console.log('  ✓ 模板已更新到', BUILD_DIR_NAME + '/');
     if (keepSet.size > 0) console.log('    保留文件:', Array.from(keepSet).join(', '));
   },
