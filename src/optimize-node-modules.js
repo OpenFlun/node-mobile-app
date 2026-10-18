@@ -15,6 +15,10 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
     IOS_ARCHES = ['arm64', 'x64'], INDEX_FILES = ['index.js', 'index.cjs', 'index.mjs'],
     // ==================== 通用工具 ====================
     toPosix = p => p.replace(POSIX_RE, '/'),
+    isSkippedPkg = rel => {
+        const seg = rel.split('/'), name = seg[0].startsWith('@') ? seg[0] + '/' + (seg[1] || '') : seg[0];
+        return SKIP_PKGS.has(name) || SKIP_PKGS.has(seg[0]);
+    },
     pickCond = (v, prefer) => {
         if (typeof v === 'string') return v;
         if (v && typeof v === 'object') {
@@ -500,7 +504,7 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
             /(^|\/)\.editorconfig$/, /(^|\/)\.prettierignore$/, /(^|\/)\.eslintignore$/,
             /(^|\/)\.dockerignore$/, /(^|\/)\.gitignore$/, /(^|\/)\.gitattributes$/, /(^|\/)\.npmignore$/,
             /\.(md|markdown)$/i, /\.(gyp|gypi)$/i, /\.(yml|yaml)$/i, /\.(h|c)$/,
-            /\.d\.ts$/, /\.map$/, /metafile-.*\.json$/,
+            /\.map$/, /metafile-.*\.json$/,
             /(^|\/)\.eslintrc(\.(json|yml|js|cjs))?$/, /(^|\/)\.babelrc(\.(json|js))?$/,
             /(^|\/)package-lock\.json$/, /(^|\/)\.package-lock\.json$/, /(^|\/)yarn\.lock$/,
             /(^|\/)package-support\.json$/,
@@ -519,7 +523,7 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
                         walk(full);
                     } else {
                         const rel = toPosix(path.relative(nmDir, full));
-                        if (PATTERNS.some(re => re.test(rel)) && !(COMPILE_EXTS.test(f.name) && inNativePkg(full)))
+                        if (PATTERNS.some(re => re.test(rel)) && !(COMPILE_EXTS.test(f.name) && (inNativePkg(full) || isSkippedPkg(rel))))
                             try { fs.unlinkSync(full), deleted++; } catch { }
                     }
                 }

@@ -124,8 +124,9 @@
 ```json
 {
   "allowScripts": {
-    "@flun/nodejs-mobile-react-native": true,
-    "@flun/node-mobile-app": true
+    "esbuild": true,
+    "@flun/node-mobile-app": true,
+    "@flun/nodejs-mobile-react-native":true
   }
 }
 ```
@@ -169,7 +170,7 @@ npx node-mobile-app build --release
 ### 常用选项
 
 | 选项            | 用途                                           |
-| --------------- | --------------------------------------------- |
+| --------------- | ---------------------------------------------- |
 | `--ios`         | 目标平台为 iOS（默认 Android）                 |
 | `--release`     | 打 release 包（仅 `build`）                    |
 | `--device <id>` | 指定设备（`test`）                             |
@@ -343,10 +344,10 @@ signing: {
 
 构建时自动优化 `node_modules`（默认开启，无需配置），减少打包文件数与体积、加速启动。
 
-| 字段      | 类型       | 默认   | 说明                                                          |
-| --------- | ---------- | ------ | ------------------------------------------------------------- |
-| `enabled` | `boolean`  | `true` | 是否启用优化                                                  |
-| `exclude` | `string[]` | `[]`   | 排除优化时异常或不想优化的包（写 `package.json` 的 `name`）   |
+| 字段      | 类型       | 默认   | 说明                                                        |
+| --------- | ---------- | ------ | ----------------------------------------------------------- |
+| `enabled` | `boolean`  | `true` | 是否启用优化                                                |
+| `exclude` | `string[]` | `[]`   | 排除优化时异常或不想优化的包（写 `package.json` 的 `name`） |
 
 **六阶段流程**：
 
