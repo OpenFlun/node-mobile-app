@@ -24,7 +24,7 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
   },
   clearDepsCaches = buildDir => {
     removeDir(path.join(buildDir, 'nodejs-assets'));
-    removeDir(path.join(buildDir, '.deps-snapshot.json'));
+    fs.rmSync(path.join(buildDir, '.deps-snapshot.json'), { force: true });
   },
   hashTemplate = templateDir => {
     const h = crypto.createHash('sha256'),
@@ -117,7 +117,7 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
       const reasons = [], targets = [];
       if (depsChanged) reasons.push('用户依赖'), targets.push('依赖缓存', 'Gradle 缓存');
       if (appInfoChanged) reasons.push('应用信息'), targets.push('Gradle 缓存');
-      console.log(chalk.yellow('  ⚠️  检测到变化（' + reasons.join('、') + '），清理 ' + targets.join('、')));
+      console.log(chalk.yellow('  ⚠️  检测到变化（' + reasons.join('、') + '），清理 ' + [...new Set(targets)].join('、')));
       clearGradleCaches(buildDir, userProjectDir);
       if (depsChanged) clearDepsCaches(buildDir);
     }
