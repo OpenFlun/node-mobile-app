@@ -2,6 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import { removeDir } from '../utils.js';
 import { getBuildDir } from '../copy.js';
+import chalk from 'chalk';
 
 const runClean = async () => {
   const userProjectDir = process.cwd(), buildDir = getBuildDir(userProjectDir),
@@ -19,11 +20,11 @@ const runClean = async () => {
 
   for (const t of targets) {
     if (fs.existsSync(t.path))
-      removeDir(t.path), console.log('已清理:', t.label, '->', path.relative(userProjectDir, t.path) || t.path);
-    else console.log('跳过（不存在）:', t.label);
+      removeDir(t.path), console.log(chalk.green('已清理: ' + t.label + ' -> ' + (path.relative(userProjectDir, t.path) || t.path)));
+    else console.log(chalk.gray('跳过（不存在）: ' + t.label));
   }
 
-  console.log('\n✅ 清理完成');
+  console.log(chalk.green('\n✅ 清理完成'));
 };
 
 export { runClean };

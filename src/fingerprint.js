@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { ensureDir, removeDir } from './utils.js';
+import chalk from 'chalk';
 
 const FINGERPRINT_FILE = '.build-fingerprint.json',
   hashUserDeps = userProjectDir => {
@@ -84,7 +85,7 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
     const fpFile = path.join(buildDir, FINGERPRINT_FILE), newFp = computeFingerprint(userProjectDir, config, pkgRoot);
     let oldFp = null;
     if (fs.existsSync(fpFile)) try { oldFp = JSON.parse(fs.readFileSync(fpFile, 'utf-8')); } catch { };
-    if (!oldFp) return console.log('  ✓ 全新构建,无缓存可清'), writeFp(fpFile, newFp);
+    if (!oldFp) return console.log(chalk.green('    ✓ 全新构建,无缓存可清')), writeFp(fpFile, newFp);
 
     const abiChanged = JSON.stringify(oldFp.abiFilters) !== JSON.stringify(newFp.abiFilters),
       libnodeChanged = JSON.stringify(oldFp.libnode) !== JSON.stringify(newFp.libnode),
@@ -103,7 +104,7 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
       if (templateChanged) reasons.push('模板文件');
       if (depsChanged) reasons.push('用户依赖');
       if (appInfoChanged) reasons.push('应用信息');
-      console.log('  ⚠️  检测到变化（' + reasons.join('、') + '），清理全部缓存');
+      console.log(chalk.yellow('  ⚠️  检测到变化（' + reasons.join('、') + '），清理全部缓存'));
       clearCommonCaches(buildDir, userProjectDir);
       removeDir(path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native', 'android', '.cxx'));
     }
@@ -111,10 +112,10 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
       const reasons = [];
       if (depsChanged) reasons.push('用户依赖');
       if (appInfoChanged) reasons.push('应用信息');
-      console.log('  ⚠️  检测到变化（' + reasons.join('、') + '），清理 nodejs-assets 缓存 + app/build');
+      console.log(chalk.yellow('  ⚠️  检测到变化（' + reasons.join('、') + '），清理 nodejs-assets 缓存 + app/build'));
       clearCommonCaches(buildDir, userProjectDir);
     }
-    else console.log('  ✓ 缓存有效，跳过清理');
+    else console.log(chalk.gray('    ✓ 缓存有效，跳过清理'));
 
     writeFp(fpFile, newFp);
   };

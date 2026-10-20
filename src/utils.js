@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { spawnSync } from 'child_process';
+import { spawnSync, spawn } from 'child_process';
+import chalk from 'chalk';
 
 const ensureDir = dir => {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -81,6 +82,20 @@ const ensureDir = dir => {
     return spawnSync(bin, args, { ...baseOpts, shell: false });
   },
   /**
+   * 异步 spawn：参数同 spawnCmd，返回 ChildProcess
+   * @param {string} bin 命令
+   * @param {string[]} args 参数
+   * @param {object} [baseOpts] spawn 选项
+   * @returns {import('child_process').ChildProcess}
+   */
+  spawnCmdAsync = (bin, args, baseOpts = {}) => {
+    if (process.platform === 'win32') {
+      const cmd = [bin, ...args].map(quoteShellArg).join(' ');
+      return spawn(cmd, { ...baseOpts, shell: true });
+    }
+    return spawn(bin, args, { ...baseOpts, shell: false });
+  },
+  /**
    * 执行命令：默认实时输出（inherit）；quiet=true 时捕获输出，成功静默、失败才打印
    */
   run = (bin, args, opts = {}) => {
@@ -109,6 +124,30 @@ const ensureDir = dir => {
     return r;
   },
   /**
+   * 执行命令：实时输出，仅首行加缩进前缀，其余行原样
+   * @param {string} bin 命令
+   * @param {string[]} args 参数
+   * @param {object} [opts] spawn 选项 + prefix
+   * @returns {Promise<void>}
+   */
+  runStream = (bin, args, opts = {}) => new Promise((resolve, reject) => {
+    const { prefix = '  ', quiet = false, ...restOpts } = opts, child = spawnCmdAsync(bin, args, restOpts),
+      verbose = !quiet || process.env.OPTIMIZE_DEBUG, KEY_RE = /Installing|Installed|FAILED|error|Error|失败|退出码/;
+    let first = true;
+    const write = chunk => {
+      for (const line of chunk.toString().split(/\r?\n/)) {
+        if (!line.trim()) continue;
+        if (!verbose && !KEY_RE.test(line)) continue;
+        process.stdout.write((first ? prefix : '') + line + '\n');
+        first = false;
+      }
+    };
+    if (child.stdout) child.stdout.on('data', write);
+    if (child.stderr) child.stderr.on('data', write);
+    child.on('error', reject);
+    child.on('close', code => code === 0 ? resolve() : reject(new Error(`${bin} ${args.join(' ')} 退出码 ${code}`)));
+  }),
+  /**
    * 定位 adb（配置 > 环境变量 > 默认路径 > PATH）
    */
   findAdb = config => {
@@ -116,7 +155,7 @@ const ensureDir = dir => {
     const configured = config?.android?.adbPath;
     if (configured) {
       if (fs.existsSync(configured)) return configured;
-      console.warn('⚠️  config.android.adbPath 不存在，回退到自动查找: ' + configured);
+      console.warn(chalk.yellow('⚠️  config.android.adbPath 不存在，回退到自动查找: ' + configured));
     }
     // 2. 环境变量 ANDROID_HOME / ANDROID_SDK_ROOT
     for (const env of ['ANDROID_HOME', 'ANDROID_SDK_ROOT']) {
@@ -139,6 +178,53 @@ const ensureDir = dir => {
   /**
    * 定位 hermesc（Hermes 编译器，用于把 JS bundle 编成字节码）
    */
+  /**
+   * 读取安装状态标志（记录上次由本工具安装的包与变体）
+   * @param {string} buildDir 构建目录
+   * @returns {{appId:string, variant:'debug'|'release'}|null} 状态或 null
+   */
+  readInstallState = buildDir => {
+    const f = path.join(buildDir, '.install-state.json');
+    if (!fs.existsSync(f)) return null;
+    try { return JSON.parse(fs.readFileSync(f, 'utf-8')); } catch { return null; }
+  },
+  /**
+   * 写入安装状态标志（安装成功后调用）
+   * @param {string} buildDir 构建目录
+   * @param {object} state 状态
+   * @returns {void}
+   */
+  writeInstallState = (buildDir, state) => {
+    try { ensureDir(buildDir), fs.writeFileSync(path.join(buildDir, '.install-state.json'), JSON.stringify(state, null, 2)); } catch { }
+  },
+  /**
+   * 查询设备上已安装包的 DEBUGGABLE 标志
+   * @param {string} adb adb 路径
+   * @param {string} appId 包名
+   * @returns {'debug'|'release'|null} 变体或 null（未安装）
+   */
+  getInstalledVariant = (adb, appId, serial) => {
+    const pre = serial ? ['-s', serial] : [],
+      r = spawnCmd(adb, [...pre, 'shell', 'dumpsys', 'package', appId], { encoding: 'utf-8' });
+    if (r.status !== 0 || !r.stdout || !r.stdout.includes('Package [')) return null;
+    return /\bDEBUGGABLE\b/.test(r.stdout) ? 'debug' : 'release';
+  },
+  /**
+   * 确保待装包可覆盖安装：标志不一致或变体不符时卸载已装包
+   * @param {string} adb adb 路径
+   * @param {string} appId 包名
+   * @param {'debug'|'release'} want 待装变体
+   * @param {string} buildDir 构建目录
+   * @param {string} [serial] 设备序列号（多设备时指定）
+   * @returns {void}
+   */
+  ensureInstallable = (adb, appId, want, buildDir, serial) => {
+    const installed = getInstalledVariant(adb, appId, serial);
+    if (installed && installed !== want) {
+      console.log(chalk.yellow(`  已安装 ${installed} 包与待装 ${want} 包签名不同，先卸载`));
+      spawnCmd(adb, [...(serial ? ['-s', serial] : []), 'uninstall', appId], { encoding: 'utf-8' });
+    }
+  },
   findHermesc = userProjectDir => {
     const base = path.join(userProjectDir, 'node_modules', 'hermes-compiler', 'hermesc'), platform = process.platform;
     let sub;
@@ -165,6 +251,7 @@ const ensureDir = dir => {
     import reactPlugin from '@eslint-react/eslint-plugin';
     import reactHooks from 'eslint-plugin-react-hooks';
     import prettier from 'eslint-config-prettier';
+import chalk from 'chalk';
 
     export default [
       js.configs.recommended,
@@ -185,6 +272,6 @@ const ensureDir = dir => {
        rules: tsPlugin.configs.recommended.rules }, prettier];`;
 
 export {
-  ensureDir, removeDir, isExcluded, copyDir, readJson, writeJson, writeIfChanged, copyFileIfChanged, run, runQuiet,
-  runSilent, findAdb, findHermesc, sanitizeFileName, buildEslintConfigSource
+  ensureDir, removeDir, isExcluded, copyDir, readJson, writeJson, writeIfChanged, copyFileIfChanged, spawnCmdAsync, run, runQuiet, runStream,
+  runSilent, findAdb, readInstallState, writeInstallState, getInstalledVariant, ensureInstallable, findHermesc, sanitizeFileName, buildEslintConfigSource
 };

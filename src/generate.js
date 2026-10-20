@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { writeIfChanged } from './utils.js';
+import chalk from 'chalk';
 
 /**
  * 生成 main.js（桥接代码，用户不需要手写）
@@ -83,7 +84,7 @@ const generateMainJs = (targetDir, config, moduleType) => {
     header = moduleType === 'module'
       ? `import { createRequire } from 'module';\nconst require = createRequire(import.meta.url);\n\n` : '',
     file = path.join(targetDir, 'main.js'), changed = writeIfChanged(file, header + body);
-  console.log(changed ? '  ✓ 已生成 main.js' : '  ✓ main.js 无变化');
+  console.log(chalk.green(changed ? '    ✓ 已生成 main.js' : '    ✓ main.js 无变化'));
 },
   generateRuntime = (buildDir, config) => {
     const data = {
@@ -98,7 +99,7 @@ const generateMainJs = (targetDir, config, moduleType) => {
       },
     }, content = `// 自动生成，请勿手改\nexport default ${JSON.stringify(data, null, 2)} as const;\n`,
       changed = writeIfChanged(path.join(buildDir, 'mobileApp.runtime.ts'), content);
-    console.log(changed ? '  ✓ 已生成 mobileApp.runtime.ts' : '  ✓ mobileApp.runtime.ts 无变化');
+    console.log(chalk.green(changed ? '    ✓ 已生成 mobileApp.runtime.ts' : '    ✓ mobileApp.runtime.ts 无变化'));
   };
 
 export { generateMainJs, generateRuntime }

@@ -2,6 +2,7 @@
 import { runTest } from '../src/commands/test.js';
 import { runBuild } from '../src/commands/build.js';
 import { runClean } from '../src/commands/clean.js';
+import chalk from 'chalk';
 
 const HELP = `
 @flun/node-mobile-app
@@ -41,8 +42,8 @@ const HELP = `
       else if (cmd === 'clean') await runClean(flags);
       else { console.log(HELP); process.exit(cmd ? 1 : 0); }
     } catch (e) {
-      console.error('\n❌ ' + e.message);
-      if (process.env.DEBUG) console.error(e.stack);
+      console.error(chalk.red('\n❌ ' + e.message));
+      if (process.env.DEBUG) console.error(chalk.red(e.stack));
       process.exit(1);
     }
   };

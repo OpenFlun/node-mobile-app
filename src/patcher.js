@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { writeIfChanged } from './utils.js';
+import chalk from 'chalk';
 
 // 把字符串中所有非 ASCII 字符转成 \uXXXX（Java Properties 规范）
 // gradle.properties 按 ISO-8859-1 读取，无法改为 UTF-8
@@ -90,7 +91,7 @@ const escapeProps = s =>
       writeIfChanged(f, c);
     }
 
-    console.log(`  ✓ 应用信息：${appName} (${appId}) v${versionName}(${versionCode})`);
+    console.log(chalk.green(`    ✓ 应用信息：${appName} (${appId}) v${versionName}(${versionCode})`));
   },
   /**
    * 把 mobileAppConfig.js 里的 Android 编译配置写入 buildDir：
@@ -149,8 +150,8 @@ const escapeProps = s =>
       writeIfChanged(manifestFile, c);
     }
 
-    console.log(`  ✓ Android 配置：SDK ${a.minSdkVersion}/${a.targetSdkVersion}/${a.compileSdkVersion},
-      权限 ${new Set(['android.permission.INTERNET', ...(a.permissions || [])]).size} 项`);
+    console.log(chalk.green(`    ✓ Android 配置：SDK ${a.minSdkVersion}/${a.targetSdkVersion}/${a.compileSdkVersion},
+      权限 ${new Set(['android.permission.INTERNET', ...(a.permissions || [])]).size} 项`));
   },
   /**
    * 处理 Release 签名：
@@ -174,7 +175,7 @@ const escapeProps = s =>
     }
 
     const keystoreAbs = path.resolve(userProjectDir, signing.keystore);
-    if (!fs.existsSync(keystoreAbs)) return console.warn('  ⚠️  签名 keystore 不存在，跳过签名配置:', keystoreAbs);
+    if (!fs.existsSync(keystoreAbs)) return console.warn(chalk.yellow('  ⚠️  签名 keystore 不存在，跳过签名配置: ' + keystoreAbs));
 
     // 1. 写 gradle.properties（追加或覆盖 MYAPP_RELEASE_*）
     const propsFile = path.join(buildDir, 'android', 'gradle.properties');
@@ -220,7 +221,7 @@ const escapeProps = s =>
       writeIfChanged(gradleFile, c);
     }
 
-    console.log('  ✓ Release 签名已配置:', path.basename(keystoreAbs));
+    console.log(chalk.green('    ✓ Release 签名已配置: ' + path.basename(keystoreAbs)));
   },
   /**
    * 应用图标：把用户提供的 PNG 缩放到 5 个 Android 密度，覆盖各 mipmap 目录下的 ic_launcher 与 ic_launcher_round
@@ -231,7 +232,7 @@ const escapeProps = s =>
     if (!iconPath) return;
 
     const iconAbs = path.resolve(userProjectDir, iconPath);
-    if (!fs.existsSync(iconAbs)) return console.warn('  ⚠️  图标文件不存在，保持默认:', iconAbs);
+    if (!fs.existsSync(iconAbs)) return console.warn(chalk.yellow('  ⚠️  图标文件不存在，保持默认: ' + iconAbs));
 
     const { Jimp } = await import('jimp'),
       densities = [
@@ -254,7 +255,7 @@ const escapeProps = s =>
       fs.writeFileSync(path.join(targetDir, 'ic_launcher_round.png'), buf);
     }
 
-    console.log(`  ✓ 图标已应用: ${path.basename(iconAbs)}`);
+    console.log(chalk.green(`    ✓ 图标已应用: ${path.basename(iconAbs)}`));
   },
   /**
    * 写入 iOS 工程配置：
@@ -335,7 +336,7 @@ const escapeProps = s =>
       writeIfChanged(appDelegate, c);
     }
 
-    console.log(`  ✓ iOS 配置：${appName} (${appId}) v${versionName}(${versionCode}), target ${deploymentTarget}`);
+    console.log(chalk.green(`    ✓ iOS 配置：${appName} (${appId}) v${versionName}(${versionCode}), target ${deploymentTarget}`));
   },
   /**
    * iOS 应用图标：把用户提供的 PNG 缩放到 9 个尺寸，写入 AppIcon.appiconset
@@ -347,7 +348,7 @@ const escapeProps = s =>
     if (!iconPath) return;
 
     const iconAbs = path.resolve(userProjectDir, iconPath);
-    if (!fs.existsSync(iconAbs)) return console.warn('  ⚠️  iOS 图标文件不存在，保持默认:', iconAbs);
+    if (!fs.existsSync(iconAbs)) return console.warn(chalk.yellow('  ⚠️  iOS 图标文件不存在，保持默认: ' + iconAbs));
 
     const iconDir = path.join(buildDir, 'ios', 'MyApp', 'Images.xcassets', 'AppIcon.appiconset');
     if (!fs.existsSync(iconDir)) return;
@@ -379,7 +380,7 @@ const escapeProps = s =>
 
     // 改写 Contents.json，给每项加 filename
     writeIfChanged(contentsFile, JSON.stringify(contents, null, 2) + '\n');
-    console.log(`  ✓ iOS 图标已应用: ${path.basename(iconAbs)}`);
+    console.log(chalk.green(`    ✓ iOS 图标已应用: ${path.basename(iconAbs)}`));
   }
 
 export {

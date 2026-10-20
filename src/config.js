@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { pathToFileURL } from 'url';
+import chalk from 'chalk';
 
 const DEFAULT_CONFIG = {
   serverPath: './server.js',
@@ -69,12 +70,12 @@ const DEFAULT_CONFIG = {
     for (const name of ['mobileAppConfig.js', 'mobileAppConfig.mjs', 'mobileAppConfig.cjs']) {
       const p = path.join(userProjectDir, name);
       if (fs.existsSync(p)) {
-        console.log('读取配置:', name);
+        console.log(chalk.gray('  读取配置: ' + name));
         const mod = await import(pathToFileURL(p).href);
         return merge(DEFAULT_CONFIG, mod.default || mod);
       }
     }
-    console.log('未找到 mobileAppConfig.js，使用默认配置');
+    console.log(chalk.yellow('未找到 mobileAppConfig.js，使用默认配置'));
     return DEFAULT_CONFIG;
   },
   validateConfig = (config, userProjectDir) => {
@@ -93,10 +94,10 @@ const DEFAULT_CONFIG = {
     if (!Number.isInteger(config.versionCode) || config.versionCode < 1) errors.push('versionCode 必须是正整数');
     if (!config.android.abiFilters?.length) errors.push('android.abiFilters 不能为空');
     if (errors.length) {
-      errors.forEach((e) => console.error('  - ' + e));
+      errors.forEach((e) => console.error(chalk.red('  - ' + e)));
       throw new Error('配置校验失败');
     }
-    console.log('配置校验通过');
+    console.log(chalk.green('    ✓ 配置校验通过'));
   },
   resolveSdkPath = (config) => {
     if (config.android && config.android.sdkPath) return config.android.sdkPath;

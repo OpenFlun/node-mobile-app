@@ -5,6 +5,7 @@ import {
 } from './utils.js';
 import { resolveSdkPath } from './config.js';
 import { createRequire } from 'module';
+import chalk from 'chalk';
 
 const BUILD_DIR_NAME = 'node-mobile-app-build',
   TEMPLATE_EXCLUDE = [
@@ -83,7 +84,7 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
 
     if (needWrite) {
       writeIfChanged(buildPkgPath, JSON.stringify(buildPkg, null, 2) + '\n');
-      if (depsUpdated > 0) console.log('  ✓ 已同步 ' + depsUpdated + ' 个依赖版本到 ' + BUILD_DIR_NAME + '/package.json');
+      if (depsUpdated > 0) console.log(chalk.green('    ✓ 已同步 ' + depsUpdated + ' 个依赖版本到 ' + BUILD_DIR_NAME + '/package.json'));
     }
 
     if (missing.length > 0) {
@@ -141,7 +142,7 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
         );
       }
     }
-    if (linked > 0) console.log('  ✓ 已兜底链接 ' + linked + ' 个嵌套依赖到用户根 node_modules');
+    if (linked > 0) console.log(chalk.green('    ✓ 已兜底链接 ' + linked + ' 个嵌套依赖到用户根 node_modules'));
   },
   /**
    * 把 CLI 包里的 template/ 逐文件覆盖到 build 目录
@@ -160,8 +161,8 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     fs.writeFileSync(path.join(buildDir, 'eslint.config.js'), buildEslintConfigSource(), 'utf-8');
     syncTemplateDependencies(pkgRoot, buildDir);
     linkNestedDeps(pkgRoot, buildDir);
-    console.log('  ✓ 模板已更新到', BUILD_DIR_NAME + '/');
-    if (keepSet.size > 0) console.log('    保留文件:', Array.from(keepSet).join(', '));
+    console.log(chalk.green('    ✓ 模板已更新到 ' + BUILD_DIR_NAME + '/'));
+    if (keepSet.size > 0) console.log(chalk.gray('    保留文件: ' + Array.from(keepSet).join(', ')));
   },
   /**
    * 复制用户 Node 项目到 <buildDir>/nodejs-assets/nodejs-project
@@ -186,9 +187,9 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     out.allowScripts = (config.allowScripts && Object.keys(config.allowScripts).length) ? config.allowScripts : { node: true };
     writeIfChanged(path.join(targetDir, 'package.json'), JSON.stringify(out, null, 2) + '\n');
 
-    console.log('  ✓ 已同步用户项目到 nodejs-assets/nodejs-project');
-    console.log('    模块类型:', out.type === 'module' ? 'ESM' : 'CJS');
-    console.log('    生产依赖:', Object.keys(out.dependencies || {}).length, '个');
+    console.log(chalk.green('    ✓ 已同步用户项目到 nodejs-assets/nodejs-project'));
+    console.log(chalk.gray('    模块类型: ' + (out.type === 'module' ? 'ESM' : 'CJS')));
+    console.log(chalk.gray('    生产依赖: ' + Object.keys(out.dependencies || {}).length + ' 个'));
 
     return { pkg: out, moduleType: out.type === 'module' ? 'module' : 'commonjs', targetDir };
   },
@@ -197,12 +198,12 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
    */
   writeLocalProperties = (buildDir, config) => {
     const sdkPath = resolveSdkPath(config);
-    if (!sdkPath) return console.warn('  ⚠️  未找到 Android SDK，请在 mobileAppConfig.js 里配置 android.sdkPath');
+    if (!sdkPath) return console.warn(chalk.yellow('  ⚠️  未找到 Android SDK，请在 mobileAppConfig.js 里配置 android.sdkPath'));
 
     const localProps = path.join(buildDir, 'android', 'local.properties'),
       escaped = sdkPath.replace(/\\/g, '\\\\').replace(/:/g, '\\:');
     fs.writeFileSync(localProps, `sdk.dir=${escaped}\n`, 'utf-8');
-    console.log('  ✓ 写入 sdk.dir:', sdkPath);
+    console.log(chalk.green('    ✓ 写入 sdk.dir: ' + sdkPath));
   },
   /**
    * 确保用户项目根存在 serverPath 指向的入口文件
@@ -216,8 +217,8 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     if (!fs.existsSync(fallback)) throw new Error('入口文件不存在: ' + config.serverPath + '（CLI 内置模板也缺失）');
 
     ensureDir(path.dirname(entryPath)), fs.copyFileSync(fallback, entryPath);
-    console.log('  ✓ 生成默认入口文件:', config.serverPath);
-    console.log('    （因为用户项目里没有这个文件,从 CLI 内置模板复制）');
+    console.log(chalk.green('    ✓ 生成默认入口文件: ' + config.serverPath));
+    console.log(chalk.gray('    （因为用户项目里没有这个文件,从 CLI 内置模板复制）'));
 
     return { created: true, path: entryPath };
   },
@@ -233,8 +234,8 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     if (!fs.existsSync(fallback)) throw new Error('CLI 缺少 mobileAppConfig.js 模板');
 
     fs.copyFileSync(fallback, configPath);
-    console.log('  ✓ 生成默认配置文件: mobileAppConfig.js');
-    console.log('    （因为用户项目里没有这个文件,从 CLI 内置模板复制）');
+    console.log(chalk.green('    ✓ 生成默认配置文件: mobileAppConfig.js'));
+    console.log(chalk.gray('    （因为用户项目里没有这个文件,从 CLI 内置模板复制）'));
 
     return { created: true, path: configPath };
   },
@@ -247,7 +248,7 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
    */
   patchAndroidAbi = (buildDir, config) => {
     const file = path.join(buildDir, 'android', 'app', 'build.gradle');
-    if (!fs.existsSync(file)) return console.warn('  ⚠️  未找到 app/build.gradle，跳过 ABI patch');
+    if (!fs.existsSync(file)) return console.warn(chalk.yellow('  ⚠️  未找到 app/build.gradle，跳过 ABI patch'));
 
     const abiList = (config.android.abiFilters || []).map((x) => `"${x}"`).join(', ');
     let c = fs.readFileSync(file, 'utf-8');
@@ -259,7 +260,7 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     if (!/ndk\s*\{\s*abiFilters/.test(c))
       c = c.replace(/(defaultConfig\s*\{)/, `$1\n        ndk {\n            abiFilters ${abiList}\n        }`);
     // 不 patch splits.abi.include：AGP 禁止它和 ndk.abiFilters 同时存在
-    if (c !== before) writeIfChanged(file, c), console.log(`  ✓ 已设置 app ndk.abiFilters = [${abiList}]`);
+    if (c !== before) writeIfChanged(file, c), console.log(chalk.green(`    ✓ 已设置 app ndk.abiFilters = [${abiList}]`));
 
     // 同步 gradle.properties 的 reactNativeArchitectures
     const propsFile = path.join(buildDir, 'android', 'gradle.properties');
@@ -267,7 +268,7 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
       let p = fs.readFileSync(propsFile, 'utf-8');
       const abiPlain = (config.android.abiFilters || []).join(','), before2 = p;
       p = p.replace(/^reactNativeArchitectures=.*/gm, `reactNativeArchitectures=${abiPlain}`);
-      if (p !== before2) writeIfChanged(propsFile, p), console.log(`  ✓ 已设置 reactNativeArchitectures = ${abiPlain}`);
+      if (p !== before2) writeIfChanged(propsFile, p), console.log(chalk.green(`    ✓ 已设置 reactNativeArchitectures = ${abiPlain}`));
     }
   },
   /**
@@ -280,7 +281,7 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     if (extras.length === 0) return;
 
     const buildPkgPath = path.join(buildDir, 'package.json');
-    if (!fs.existsSync(buildPkgPath)) return console.warn('  ⚠️  未找到 buildDir/package.json,跳过 extraRnDependencies');
+    if (!fs.existsSync(buildPkgPath)) return console.warn(chalk.yellow('  ⚠️  未找到 buildDir/package.json,跳过 extraRnDependencies'));
 
     const buildPkg = readJson(buildPkgPath), missing = [];
     if (!buildPkg.dependencies) buildPkg.dependencies = {};
@@ -299,7 +300,7 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
 
     if (added > 0) {
       writeIfChanged(buildPkgPath, JSON.stringify(buildPkg, null, 2) + '\n');
-      console.log(`  ✓ 已注入 ${added} 个额外 RN 依赖到 buildDir/package.json`);
+      console.log(chalk.green(`    ✓ 已注入 ${added} 个额外 RN 依赖到 buildDir/package.json`));
     }
 
     if (missing.length > 0) {

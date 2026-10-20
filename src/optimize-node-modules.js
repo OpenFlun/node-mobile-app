@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { createRequire } from 'module';
+import chalk from 'chalk';
 
 const require = createRequire(import.meta.url), subpath = (...parts) => './' + path.posix.join(...parts),
     BUNDLED_DIR = 'bundled', NM_DIR = 'node_modules', PKG_JSON = 'package.json',
@@ -15,10 +16,6 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
     IOS_ARCHES = ['arm64', 'x64'], INDEX_FILES = ['index.js', 'index.cjs', 'index.mjs'],
     // ==================== 通用工具 ====================
     toPosix = p => p.replace(POSIX_RE, '/'),
-    isSkippedPkg = rel => {
-        const seg = rel.split('/'), name = seg[0].startsWith('@') ? seg[0] + '/' + (seg[1] || '') : seg[0];
-        return SKIP_PKGS.has(name) || SKIP_PKGS.has(seg[0]);
-    },
     pickCond = (v, prefer) => {
         if (typeof v === 'string') return v;
         if (v && typeof v === 'object') {
@@ -194,8 +191,8 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
             if (excludePkgs.has(relName)) { skipped++; continue; }
             if (SKIP_PKGS.has(relName)) { skipped++; continue; }
             if (hasNativeModule(pkgDir)) { skipped++; continue; }
-            // 删除安装期脚本字段：运行时无安装期，且 Gradle npm rebuild 会触发脚本导致失败
-            // 原生模块包已在上一步跳过（其 scripts 是编译必需，必须保留）
+            // 删除安装期脚本字段:运行时无安装期,且 Gradle npm rebuild 会触发脚本导致失败
+            // 原生模块包已在上一步跳过(其 scripts 是编译必需,必须保留)
             if (j.scripts) { delete j.scripts; fs.writeFileSync(pj, JSON.stringify(j, null, 2)); }
             if (countJS(pkgDir) <= 1) { skipped++; continue; }
             // 已优化过的包跳过
@@ -234,7 +231,7 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
                 }
                 if (isESM) newExports[e.key] = subpath(BUNDLED_DIR, outName);
                 else {
-                    // CJS 包：若 bundle 末尾是 module.exports = require_xxx()（整体赋值）,
+                    // CJS 包:若 bundle 末尾是 module.exports = require_xxx()(整体赋值),
                     // cjs-module-lexer 静态分析拿不到命名导出,此时定位主入口的 __commonJS 块,
                     // 块内抓 exports.X = 形式,追加显式声明让 lexer 识别;
                     try {
@@ -316,12 +313,12 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
             walkDel(pkgDir), totalDeleted += deleted, merged++;
             if (resJsHits && resJsHits.size > 0 && resLog)
                 for (const [k, v] of resJsHits) resLog.push(`      ${relName}: ${k} (${v} 个 JS)`);
-            if (process.env.OPTIMIZE_DEBUG) console.log(`  ✓ ${relName} (${parse.entries.length} 入口)`);
+            if (process.env.OPTIMIZE_DEBUG) console.log(chalk.gray(`  ✓ ${relName} (${parse.entries.length} 入口)`));
         }
 
         if (resLog && resLog.length > 0) {
-            console.log('  处理保留的资源 JS（被引用则合并，否则删除）:');
-            for (const line of resLog) console.log(line);
+            console.log(chalk.gray('  处理保留的资源 JS(被引用则合并,否则删除):'));
+            for (const line of resLog) console.log(chalk.gray(line));
         }
         return { merged, skipped, totalDeleted };
     },
@@ -403,12 +400,12 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
                     if (cnt > 0) cleared += cnt, pkgItems.push(`${item}(${cnt})`);
                 }
             }
-            if (process.env.OPTIMIZE_DEBUG && pkgItems.length > 0) console.log(`  ✓ ${pkgRel}: ${pkgItems.join(', ')}`);
+            if (process.env.OPTIMIZE_DEBUG && pkgItems.length > 0) console.log(chalk.gray(`  ✓ ${pkgRel}: ${pkgItems.join(', ')}`));
         }
         return cleared;
     },
     // ==================== 清平台 ====================
-    prunePlatform = async (nmDir, myPlat, myArch) => {
+    prunePlatform = async (nmDir, myPlat, myArch, targetPlatform) => {
         let removed = 0;
         const readHead = file => {
             let fd;
@@ -467,13 +464,16 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
                 return null;
             },
             delFile = p => {
-                try { fs.unlinkSync(p), removed++; } catch { }
+                try { fs.statSync(p).isDirectory() ? fs.rmSync(p, { recursive: true, force: true }) : fs.unlinkSync(p), removed++; } catch { }
             },
             processDir = d => {
                 let entries;
                 try { entries = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
                 for (const e of entries) {
                     const full = path.join(d, e.name);
+                    const expectedPrebuilds = targetPlatform === 'ios' ? ['darwin'] : ['android'],
+                        prebuildMatch = full.match(/[\\/]prebuilds[\\/](linux|darwin|win32|android)-/i);
+                    if (prebuildMatch && !expectedPrebuilds.includes(prebuildMatch[1].toLowerCase())) { delFile(full); continue; }
                     if (e.isDirectory()) { processDir(full); continue; }
                     if (JS_RE.test(e.name)) continue;
                     let plat = suffixPlat(e.name), arch = null;
@@ -486,7 +486,7 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
                     if (platBad || archBad) {
                         if (process.env.OPTIMIZE_DEBUG) {
                             const rel = toPosix(path.relative(nmDir, full));
-                            console.log(`  ✓ ${rel} (${platBad ? '平台不符: ' + plat : '架构不符: ' + arch})`);
+                            console.log(chalk.gray(`  ✓ ${rel} (${platBad ? '平台不符: ' + plat : '架构不符: ' + arch})`));
                         }
                         delFile(full);
                     }
@@ -496,21 +496,19 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
         return removed;
     },
     // ==================== 清开发文件 ====================
-    pruneDevFiles = async (nmDir, nativePkgs) => {
+    pruneDevFiles = async (nmDir) => {
         let deleted = 0;
         const PATTERNS = [
             /(^|\/)tsconfig\.json$/,
             /(^|\/)\.nycrc(\.(json|yml))?$/,
             /(^|\/)\.editorconfig$/, /(^|\/)\.prettierignore$/, /(^|\/)\.eslintignore$/,
             /(^|\/)\.dockerignore$/, /(^|\/)\.gitignore$/, /(^|\/)\.gitattributes$/, /(^|\/)\.npmignore$/,
-            /\.(md|markdown)$/i, /\.(gyp|gypi)$/i, /\.(yml|yaml)$/i, /\.(h|c)$/,
+            /\.(md|markdown)$/i, /\.(yml|yaml)$/i, /\.(gyp|gypi|h|hh|hpp|c|cc|cpp|cxx|m|mm)$/i,
             /\.map$/, /metafile-.*\.json$/,
             /(^|\/)\.eslintrc(\.(json|yml|js|cjs))?$/, /(^|\/)\.babelrc(\.(json|js))?$/,
             /(^|\/)package-lock\.json$/, /(^|\/)\.package-lock\.json$/, /(^|\/)yarn\.lock$/,
             /(^|\/)package-support\.json$/,
         ], DIR_SKIP = new Set([BUNDLED_DIR]),
-            COMPILE_EXTS = /\.(gyp|gypi|h|hh|hpp|c|cc|cpp|cxx|m|mm)$/i,
-            inNativePkg = p => nativePkgs.some(nd => p.startsWith(nd + path.sep)),
             walk = d => {
                 for (const f of fs.readdirSync(d, { withFileTypes: true })) {
                     const full = path.join(d, f.name);
@@ -523,7 +521,7 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
                         walk(full);
                     } else {
                         const rel = toPosix(path.relative(nmDir, full));
-                        if (PATTERNS.some(re => re.test(rel)) && !(COMPILE_EXTS.test(f.name) && (inNativePkg(full) || isSkippedPkg(rel))))
+                        if (PATTERNS.some(re => re.test(rel)))
                             try { fs.unlinkSync(full), deleted++; } catch { }
                     }
                 }
@@ -533,19 +531,20 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
     },
     pruneIntermediates = async nmDir => {
         let deleted = 0;
-        const walk = d => {
-            for (const f of fs.readdirSync(d, { withFileTypes: true })) {
-                const full = path.join(d, f.name);
-                if (f.isDirectory()) walk(full);
-                else if (f.name.endsWith('.orig')) try { fs.unlinkSync(full), deleted++; } catch { }
-            }
-        };
+        const MID_RE = /\.(o|d|mk|stamp|Makefile|iobj|ipdb|pdb|exp|lib|obj|vcxproj|tlog|recipe|lastbuildstate|nativecodeanalysis\.xml)$/i,
+            walk = d => {
+                for (const f of fs.readdirSync(d, { withFileTypes: true })) {
+                    const full = path.join(d, f.name);
+                    if (f.isDirectory()) walk(full);
+                    else if (full.includes(path.sep + 'obj.target' + path.sep) || f.name === 'Makefile' || f.name.endsWith('.orig') || MID_RE.test(f.name)) try { fs.unlinkSync(full), deleted++; } catch { }
+                }
+            };
         walk(nmDir);
         return deleted;
     },
     applyFilesRules = async nmDir => {
         let deleted = 0;
-        // 1) 删顶层 node 假包（npm 上名为 node 的包,仅提供 node.exe,运行时不需要）
+        // 1) 删顶层 node 假包(npm 上名为 node 的包,仅提供 node.exe,运行时不需要)
         const LICENSE_RE = /^licen[sc]e/i, TS_RE = /\.(ts|cts|mts)$/, nodePkg = path.join(nmDir, 'node');
         if (fs.existsSync(nodePkg)) try { fs.rmSync(nodePkg, { recursive: true, force: true }), deleted++; } catch { }
 
@@ -595,7 +594,7 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
 
 // ==================== 导出函数 ====================
 /**
- * 清除快照中的 verified 标记（优化开始或构建失败时调用）
+ * 清除快照中的 verified 标记(优化开始或构建失败时调用)
  * >查看定义:@see {@link clearVerified}
  * @param {string} snapshotDir 快照目录
  * @returns {Promise<void>}
@@ -609,7 +608,7 @@ const clearVerified = async snapshotDir => {
     } catch { }
 };
 /**
- * 标记快照 verified=true（构建全流程成功后由 build.js / test.js 调用）
+ * 标记快照 verified=true(构建全流程成功后由 build.js / test.js 调用)
  * >查看定义:@see {@link markVerified}
  * @param {string} snapshotDir 快照目录
  * @returns {Promise<void>}
@@ -625,14 +624,14 @@ const markVerified = async snapshotDir => {
 /**
  * 执行 node_modules 六阶段优化
  * >查看定义:@see {@link optimizeNodeModules}
- * @param {string} tempDir node_modules 所在目录（nodejs-assets/nodejs-project）
+ * @param {string} tempDir node_modules 所在目录(nodejs-assets/nodejs-project)
  * @param {object} [config] 优化配置
- * @param {string} [config.snapshotDir] 快照目录（默认同 tempDir）
- * @param {string} [config.targetPlatform] 目标平台：'android'（默认）或 'ios'
- * @param {string[]} [config.abiFilters] Android 目标架构（默认 ['arm64-v8a']）;iOS 固定保留 arm64 + x64
- * @param {string} config.runtimeMajor 运行时 Node 主版本号（必填,从 libnode/node_version.h 读取）
+ * @param {string} [config.snapshotDir] 快照目录(默认同 tempDir)
+ * @param {string} [config.targetPlatform] 目标平台:'android'(默认)或 'ios'
+ * @param {string[]} [config.abiFilters] Android 目标架构(默认 ['arm64-v8a']);iOS 固定保留 arm64 + x64
+ * @param {string} config.runtimeMajor 运行时 Node 主版本号(必填,从 libnode/node_version.h 读取)
  * @param {string[]} [config.exclude] 排除的包名列表
- * @returns {Promise<object>} 各阶段统计（merged / cleared / platform / devFiles / intermediates / filesRules）
+ * @returns {Promise<object>} 各阶段统计(merged / cleared / platform / devFiles / intermediates / filesRules)
  */
 const optimizeNodeModules = async (tempDir, config = {}) => {
     const targetPlatform = config.targetPlatform || 'android', abiFilters = config.abiFilters || ['arm64-v8a'],
@@ -641,49 +640,49 @@ const optimizeNodeModules = async (tempDir, config = {}) => {
         snapPath = path.join(snapshotDir, SNAPSHOT_FILE), myPlat = TARGET_PLAT_MAP[targetPlatform] || [],
         myArch = targetPlatform === 'ios' ? IOS_ARCHES : (abiFilters || []).map(a => ABI_ARCH_MAP[a]).filter(Boolean);
 
-    if (!runtimeMajor) throw new Error('optimizeNodeModules 缺少 config.runtimeMajor（应从 libnode/node_version.h 读取）');
+    if (!runtimeMajor) throw new Error('optimizeNodeModules 缺少 config.runtimeMajor(应从 libnode/node_version.h 读取)');
     if (!fs.existsSync(nmDir)) {
-        console.log('[优化] node_modules 不存在,跳过');
+        console.log(chalk.gray('[优化] node_modules 不存在,跳过'));
         return { skipped: true };
     }
 
     await clearVerified(snapshotDir);  // 执行优化前清 verified,构建成功后再由 build.js / test.js 写回 true
-    const t0 = Date.now(), nativePkgs = findPackages(nmDir).filter(p => fs.existsSync(path.join(p, 'binding.gyp')));
+    const t0 = Date.now();
     try {
-        // 阶段1: 清空资源（跳过 js，留待合并阶段处理）
-        console.log('  [1/6] 清空复制到项目根的资源...');
+        // 阶段1: 清空资源(跳过 js,留待合并阶段处理)
+        console.log(chalk.cyan('    [1/6] 清空复制到项目根的资源...'));
         const c = await clearResources(nmDir, excludePkgs);
-        console.log(`    清空 ${c} 个文件（js 文件保留，留待合并阶段处理）`);
+        console.log(chalk.green(`      清空 ${c} 个文件(js 文件保留,留待合并阶段处理)`));
 
         // 阶段2: 合并
-        console.log('  [2/6] 合并 JS...');
+        console.log(chalk.cyan('    [2/6] 合并 JS...'));
         const m = await mergeAll(nmDir, excludePkgs, runtimeMajor);
-        console.log(`    合并 ${m.merged} 包,跳过 ${m.skipped},删 ${m.totalDeleted} 个 JS`);
+        console.log(chalk.green(`      合并 ${m.merged} 包,跳过 ${m.skipped},删 ${m.totalDeleted} 个 JS`));
 
         // 阶段3: 清平台二进制
-        console.log('  [3/6] 清理非当前平台二进制...');
-        const p = await prunePlatform(nmDir, myPlat, myArch);
-        console.log(`    清理 ${p} 项`);
+        console.log(chalk.cyan('    [3/6] 清理非当前平台二进制...'));
+        const p = await prunePlatform(nmDir, myPlat, myArch, targetPlatform);
+        console.log(chalk.green(`      清理 ${p} 项`));
 
         // 阶段4: 清开发文件
-        console.log('  [4/6] 清理开发文件...');
-        const d = await pruneDevFiles(nmDir, nativePkgs);
-        console.log(`    清理 ${d} 个文件`);
+        console.log(chalk.cyan('    [4/6] 清理开发文件...'));
+        const d = await pruneDevFiles(nmDir);
+        console.log(chalk.green(`      清理 ${d} 个文件`));
 
         // 阶段5: 清中间产物
-        console.log('  [5/6] 清理中间产物...');
+        console.log(chalk.cyan('    [5/6] 清理中间产物...'));
         const i = await pruneIntermediates(nmDir);
-        console.log(`    清理 ${i} 个文件`);
+        console.log(chalk.green(`      清理 ${i} 个文件`));
 
-        // 阶段6: 清除不参与运行的文件（与 build.js 的 files 数组对齐）
-        console.log('  [6/6] 清除不参与运行的文件和空目录...');
+        // 阶段6: 清除不参与运行的文件(与 build.js 的 files 数组对齐)
+        console.log(chalk.cyan('    [6/6] 清除不参与运行的文件和空目录...'));
         const fr = await applyFilesRules(nmDir);
-        console.log(`    清理 ${fr} 项`);
+        console.log(chalk.green(`      清理 ${fr} 项`));
 
         // 写 platform/abiFilters/runtimeMajor,同时 verified=false
         await writeSnapshotFlags(snapshotDir, targetPlatform, abiFilters, runtimeMajor);
         const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
-        console.log(`[信息] 优化完成,耗时 ${elapsed}s`);
+        console.log(chalk.green(`  [信息] 优化完成,耗时 ${elapsed}s`));
 
         return { merged: m.merged, cleared: c, platform: p, devFiles: d, intermediates: i, filesRules: fr };
     } catch (err) {
@@ -693,7 +692,7 @@ const optimizeNodeModules = async (tempDir, config = {}) => {
     }
 };
 /**
- * 当前优化文件的 SHA256 前 16 位（缓存指纹:优化代码一改,缓存自动失效）
+ * 当前优化文件的 SHA256 前 16 位(缓存指纹:优化代码一改,缓存自动失效)
  * >查看定义:@see {@link SELF_HASH}
  */
 const SELF_HASH = (() => {
