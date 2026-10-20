@@ -43,10 +43,3 @@
 ### 性能
 - **优化后 `node_modules` 体积与文件数下降**:编译前移使优化阶段可无条件清理编译源文件与中间产物,`bcrypt` 编译后仅保留 `build/Release/bcrypt_lib.node`;`prebuilds` 按目标平台裁剪,APK 不再包含异平台二进制;
 - **Gradle 增量缓存保持有效**:bundle 哈希一致时不删 `mergeDebugAssets`,连续 `test` 走 UP-TO-DATE;
-
-## [3.1.5] - 2026-10-18 10:04
-### 修复
-- **修复原生模块编译时 `node-addon-api` 的 gyp / 头文件被误删**:`pruneDevFiles` 原保护条件为 `COMPILE_EXTS && inNativePkg`,而 `node-addon-api` 自身没有 `binding.gyp`,不在原生模块包列表内,其 `node_addon_api.gyp` 与头文件被当作开发文件删除,导致依赖它的原生模块(如 `bcrypt`)在 Gradle `npm rebuild` 时报 `../node-addon-api/node_addon_api.gyp not found`,构建中断;现新增 `isSkippedPkg`,保护条件改为 `COMPILE_EXTS && (inNativePkg || isSkippedPkg)`,仅保留 `SKIP_PKGS` 包内的编译文件(`.gyp`/`.gypi`/`.h`/`.c` 等),`.md`/`.map`/`.ts` 等仍照常清理,不扩大保留范围;
-
-### 变更
-- **阶段 4 不再清理 `.d.ts`**:`.d.ts` 已由阶段 6 的 `TS_RE`(`/\.(ts|cts|mts)$/`)覆盖,阶段 4 重复清理属冗余;移除后 `.d.ts` 统一由阶段 6 处理,清理职责不重叠;
