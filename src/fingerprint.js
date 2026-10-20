@@ -17,10 +17,14 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
     return h.digest('hex');
   },
   writeFp = (file, fp) => fs.writeFileSync(file, JSON.stringify(fp, null, 2), 'utf-8'),
-  clearCommonCaches = (buildDir, userProjectDir) => {
+  clearGradleCaches = (buildDir, userProjectDir) => {
     removeDir(path.join(buildDir, 'android', 'build'));
     removeDir(path.join(buildDir, 'android', 'app', 'build'));
     removeDir(path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native', 'android', 'build'));
+  },
+  clearDepsCaches = buildDir => {
+    removeDir(path.join(buildDir, 'nodejs-assets'));
+    removeDir(path.join(buildDir, '.deps-snapshot.json'));
   },
   hashTemplate = templateDir => {
     const h = crypto.createHash('sha256'),
@@ -104,16 +108,18 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
       if (templateChanged) reasons.push('模板文件');
       if (depsChanged) reasons.push('用户依赖');
       if (appInfoChanged) reasons.push('应用信息');
-      console.log(chalk.yellow('  ⚠️  检测到变化（' + reasons.join('、') + '），清理全部缓存'));
-      clearCommonCaches(buildDir, userProjectDir);
+      console.log(chalk.yellow('  ⚠️  检测到变化（' + reasons.join('、') + '），清理 Gradle 缓存、CMake 缓存与依赖缓存'));
+      clearGradleCaches(buildDir, userProjectDir);
       removeDir(path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native', 'android', '.cxx'));
+      clearDepsCaches(buildDir);
     }
     else if (depsChanged || appInfoChanged) {
-      const reasons = [];
-      if (depsChanged) reasons.push('用户依赖');
-      if (appInfoChanged) reasons.push('应用信息');
-      console.log(chalk.yellow('  ⚠️  检测到变化（' + reasons.join('、') + '），清理 nodejs-assets 缓存 + app/build'));
-      clearCommonCaches(buildDir, userProjectDir);
+      const reasons = [], targets = [];
+      if (depsChanged) reasons.push('用户依赖'), targets.push('依赖缓存', 'Gradle 缓存');
+      if (appInfoChanged) reasons.push('应用信息'), targets.push('Gradle 缓存');
+      console.log(chalk.yellow('  ⚠️  检测到变化（' + reasons.join('、') + '），清理 ' + targets.join('、')));
+      clearGradleCaches(buildDir, userProjectDir);
+      if (depsChanged) clearDepsCaches(buildDir);
     }
     else console.log(chalk.gray('    ✓ 缓存有效，跳过清理'));
 
