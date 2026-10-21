@@ -30,11 +30,11 @@ CLI 自动查找,顺序：
 
 **必需组件**：
 
-| 组件           | 版本                                 |
-| -------------- | ------------------------------------ |
-| SDK Platform   | 与 `mobileAppConfig.js` 的 `android.compileSdkVersion` 一致的 Platform |
-| Build-Tools    | 与 `mobileAppConfig.js` 的 `android.buildToolsVersion` 一致 |
-| Platform-Tools | 含 adb 的较新版本                    |
+| 组件           | 版本                                                                      |
+| -------------- | ------------------------------------------------------------------------- |
+| SDK Platform   | 与 `mobileAppConfig.js` 的 `android.compileSdkVersion` 一致的 Platform    |
+| Build-Tools    | 与 `mobileAppConfig.js` 的 `android.buildToolsVersion` 一致               |
+| Platform-Tools | 含 adb 的较新版本                                                         |
 | NDK            | 与模板 `android/build.gradle` 的 `ndkVersion` 一致（libnode.so 编译依赖） |
 
 ### 1.3 adb
