@@ -32,10 +32,10 @@ CLI 自动查找,顺序：
 
 | 组件           | 版本                                 |
 | -------------- | ------------------------------------ |
-| SDK Platform   | 36                                   |
-| Build-Tools    | 37.0.0                               |
-| Platform-Tools | 最新（含 adb）                       |
-| NDK            | 27.1.12297006（libnode.so 编译依赖） |
+| SDK Platform   | 与 `mobileAppConfig.js` 的 `android.compileSdkVersion` 一致的 Platform |
+| Build-Tools    | 与 `mobileAppConfig.js` 的 `android.buildToolsVersion` 一致 |
+| Platform-Tools | 含 adb 的较新版本                    |
+| NDK            | 与模板 `android/build.gradle` 的 `ndkVersion` 一致（libnode.so 编译依赖） |
 
 ### 1.3 adb
 
@@ -71,7 +71,7 @@ NODE_MOBILE_FORCE_REBUILD=1 npx node-mobile-app test
 $env:NODE_MOBILE_FORCE_REBUILD=1; npx node-mobile-app test
 ```
 
-**平台限制**：Windows 上 nodejs-mobile 无法编译原生模块（上游限制）;此功能仅 Linux / macOS 可用;
+**Windows 编译原生模块的前置条件**：需 Android SDK 中的 NDK（提供交叉编译工具链与 `make.exe`）与 Git for Windows（提供 `sh` / `sed` / `rm` 等 GNU 工具，`nodejs-mobile-gyp` 会从注册表或常见路径自动定位）；二者缺失时编译阶段报错；Linux / macOS 使用系统自带的同类工具，无需额外安装;
 
 ---
 
@@ -84,7 +84,7 @@ $env:NODE_MOBILE_FORCE_REBUILD=1; npx node-mobile-app test
 从 `@flun/nodejs-mobile-react-native` 1.0.1 起,`libnode.so` **不在 npm 包里**,安装时由 postinstall 脚本从 Gitee / GitHub Release 自动下载：
 
 - **下载源**：Gitee 优先,失败自动回退 GitHub
-- **下载内容**：`android-libnode.zip`（约 52 MB）,含 `bin/` + `include/`
+- **下载内容**：`android-libnode.zip`（双架构约 88 MB），含 `bin/` + `include/`；具体大小以实际下载为准；
 - **覆盖目标**：`node_modules/@flun/nodejs-mobile-react-native/android/libnode/`
 - **幂等**：已装版本匹配则跳过,不重复下载
 - **失败处理**：全部源失败时打印下载链接,不中断 npm 安装
@@ -99,7 +99,7 @@ NODE_MOBILE_PREBUILT_ANDROID_SKIP=1     # 只跳过 Android
 
 **用户不需要手动下载和替换**——除非要换成自编译的版本,见 2.2;
 
-### 2.1 官方 v18（默认自动下载）
+### 2.1 自动下载的预编译产物
 
 路径：
 
@@ -107,27 +107,26 @@ NODE_MOBILE_PREBUILT_ANDROID_SKIP=1     # 只跳过 Android
 <你的项目>/node_modules/@flun/nodejs-mobile-react-native/android/libnode/bin/<架构>/libnode.so
 ```
 
+以下为 v18 产物的实测大小；其它版本的体积以实际下载为准：
+
 | 架构        | 大小    |
 | ----------- | ------- |
 | arm64-v8a   | 59.6 MB |
 | armeabi-v7a | 56 MB   |
 | x86_64      | 62.3 MB |
 
-**特点**：`--with-intl=none`,**不含 ICU**;
+**版本特性**：v18 产物使用 `--with-intl=none`，不含 ICU，不能用 `\p{...}` / `\P{...}` Unicode 正则，必须配 Express 4；v22 起产物带 full-icu，可用 Unicode 正则与 Express 5；下载版本由 `package.json` 的 `prebuiltAssets.version` 决定；
 
-- 不能用 `\p{...}` / `\P{...}` Unicode 正则
-- **必须 Express 4**
+### 2.2 替换为自编译产物
 
-### 2.2 自编译 v22+（推荐）
-
-**官方 v18 已停更**;要跑 Express 5 或新语法,需替换;
+自动下载的产物若不含 full-icu（见 2.3 的 `strings` 验证），且需跑 Express 5 或使用 Unicode 正则，替换为自编译的 full-icu 版本；
 
 **预编译产物仓库**：
 
 - GitHub：https://github.com/OpenFlun/nodejs-mobile
 - Gitee（国内）：https://gitee.com/OpenFlun/nodejs-mobile
 
-**当前 Android 支持情况**：
+**架构支持（按版本）**：
 
 | 架构        | v18 | v22 |
 | ----------- | --- | --- |
@@ -135,16 +134,16 @@ NODE_MOBILE_PREBUILT_ANDROID_SKIP=1     # 只跳过 Android
 | x86_64      | ✓   | ✓   |
 | armeabi-v7a | ✓   | ✗   |
 
-**未来计划**：v24、v26 逐步适配;
+架构支持随产物版本变化；具体以 Releases 页面各版本的产物说明为准；
 
 **替换步骤**：
 
-1. 下载 `libnode.zip`（含 `bin/` + `include/`）
+1. 下载 `android-libnode.zip`（含 `bin/` + `include/`）
 2. **整体替换** `你的项目/node_modules/@flun/nodejs-mobile-react-native/android/libnode/`
-3. `mobileAppConfig.js` 的 `android.abiFilters` 只写实际存在的架构（v22 是 `['arm64-v8a', 'x86_64']`）
+3. `mobileAppConfig.js` 的 `android.abiFilters` 只写该产物实际包含的架构（见解压后的 `libnode/bin/` 目录）
 4. 跑 `npx node-mobile-app test` 或 `build`
 
-CLI 指纹机制会自动清 `.cxx` / `android/build` / `app/build` 并全量重编——**无需手动清缓存**;
+CLI 指纹机制检测到 `libnode.so` 变化后，会清 `.cxx` / `android/build` / `app/build`，并清 `nodejs-assets` 与依赖快照，触发重装、重编、重优化——**无需手动清缓存**；
 
 **完整自编译流程**见 `自定义libnode指南.md`;
 

@@ -11,7 +11,7 @@
 
 ## 一、自定义 libnode.so
 
-`@flun/node-mobile-app` 默认带的是官方 `nodejs-mobile` 的 **v18** 二进制;v18 的限制：
+`@flun/node-mobile-app` 的 Node.js 运行时由 `@flun/nodejs-mobile-react-native` 提供的 `libnode.so` 决定;下载版本以该包 `package.json` 的 `prebuiltAssets.version` 字段为准,运行时版本与之一致;不同版本的产物在 ICU 支持上有差异:
 
 | 限制                           | 影响                                                    |
 | ------------------------------ | ------------------------------------------------------- |
@@ -25,32 +25,32 @@
 
 ## 二、用预编译产物（推荐）
 
-> **注意**：从 `@flun/nodejs-mobile-react-native` 1.0.1 起,Android 的 `libnode.so` 由 postinstall 脚本从 Release 自动下载（默认 v18.20.4）;
-> **本节适用于**：要把自动下载的 v18 换成 **v22+ 自编译版本**（带 full-icu,能跑 Express 5）的场景;
-> 若只是用默认 v18,你**不需要**看本节——装包后 `libnode.so` 已就位;
+> **注意**:从 `@flun/nodejs-mobile-react-native` 1.0.1 起,Android 的 `libnode.so` 由 postinstall 脚本从 Release 自动下载;版本以该包 `package.json` 的 `prebuiltAssets.version` 字段为准;
+> **本节适用于**:自动下载的产物为 v22 以下(不带 full-icu),且需跑 Express 5 或使用 Unicode 正则,要换成 v22+ 自编译版本;
+> 若产物为 v22 及以上(带 full-icu),你**不需要**看本节--装包后 `libnode.so` 已就位;
 
 
 ### 2.1 下载地址
 
-**最新版本**：v22.23.2（2026-09-12 发布）
+**下载版本**：见 Releases 页面，按需选择；版本号以页面中的 tag 为准，不在文档中固定；
 
-| 平台          | 源码仓库                                                            | Release 页面                                                   | 直链下载                                                                                                        |
-| ------------- | ------------------------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| GitHub        | [OpenFlun/nodejs-mobile](https://github.com/OpenFlun/nodejs-mobile) | [Releases](https://github.com/OpenFlun/nodejs-mobile/releases) | [android-libnode.zip](https://github.com/OpenFlun/nodejs-mobile/releases/download/v22.23.2/android-libnode.zip) |
-| Gitee（国内） | [OpenFlun/nodejs-mobile](https://gitee.com/OpenFlun/nodejs-mobile)  | [Releases](https://gitee.com/OpenFlun/nodejs-mobile/releases)  | [android-libnode.zip](https://gitee.com/OpenFlun/nodejs-mobile/releases/download/v22.23.2/android-libnode.zip)  |
+| 平台          | 源码仓库                                                            | Release 页面                                                   |
+| ------------- | ------------------------------------------------------------------- | -------------------------------------------------------------- |
+| GitHub        | [OpenFlun/nodejs-mobile](https://github.com/OpenFlun/nodejs-mobile) | [Releases](https://github.com/OpenFlun/nodejs-mobile/releases) |
+| Gitee（国内） | [OpenFlun/nodejs-mobile](https://gitee.com/OpenFlun/nodejs-mobile)  | [Releases](https://gitee.com/OpenFlun/nodejs-mobile/releases)  |
 
 **文件名说明**：发布名为 `android-libnode.zip`（带 `android-` 前缀）,为未来 iOS 等平台扩展预留接口（如 `ios-libnode.zip`）;**内容仍是标准的 `libnode/` 目录**（`bin/` + `include/`）;
 
 ### 2.2 支持矩阵
 
-| 架构                         | v18    | v22      | v24  | v26  |
-| ---------------------------- | ------ | -------- | ---- | ---- |
-| **arm64-v8a**（真机）        | ✓ 官方 | ✓ 预编译 | 计划 | 计划 |
-| **x86_64**（模拟器）         | ✓ 官方 | ✓ 预编译 | 计划 | 计划 |
-| **armeabi-v7a**（32 位 ARM） | ✓ 官方 | ✗        | ✗    | ✗    |
+| 架构                         | v18    | v22      |
+| ---------------------------- | ------ | -------- |
+| **arm64-v8a**（真机）        | ✓ 官方 | ✓ 预编译 |
+| **x86_64**（模拟器）         | ✓ 官方 | ✓ 预编译 |
+| **armeabi-v7a**（32 位 ARM） | ✓ 官方 | ✗        |
 
-**当前 v22 下载入口**：
-- 双架构（推荐）：`android-libnode.zip`（约 88 MB）
+**下载入口**：
+- 双架构（推荐）：`android-libnode.zip`（约 88 MB，具体以实际产物为准）
 - 单架构 zip 已废弃,不再发布
 
 **armeabi-v7a 为什么放弃**：V8 v22 在 x64 主机上无法交叉编译 32 位 ARM 目标（详见 5.1）;
@@ -74,8 +74,8 @@ libnode/
 # 进入插件的 android 目录
 cd <你的项目>/node_modules/@flun/nodejs-mobile-react-native/android
 
-# 备份官方 v18（可选,方便回退）
-cp -r libnode libnode.bak-v18
+# 备份原产物（可选，方便回退）
+cp -r libnode libnode.bak
 
 # 整体替换
 rm -rf libnode
@@ -89,7 +89,7 @@ mv /tmp/libnode ./libnode
 $plugin = '<你的项目>\node_modules\@flun\nodejs-mobile-react-native\android'
 
 # 备份
-Copy-Item -Recurse "$plugin\libnode" "$plugin\libnode.bak-v18"
+Copy-Item -Recurse "$plugin\libnode" "$plugin\libnode.bak"
 
 # 替换
 Remove-Item -Recurse -Force "$plugin\libnode"
@@ -138,7 +138,7 @@ npx node-mobile-app build     # 打包 APK
 
 ### 2.6 重编原生模块（仅当项目含原生模块）
 
-Node v18 → v22 后,ABI 变了（`NODE_MODULE_VERSION` 从 108 → 127）;**如果项目里装了带 C++ 代码的 npm 包**（如 `bcrypt`、`sqlite3`、`sharp`）,换 v22 的 `libnode.so` 后需要重编才能兼容;
+不同 Node 主版本的 `NODE_MODULE_VERSION` 不同(如 v18 为 108,v22 为 127);**如果项目里装了带 C++ 代码的 npm 包**(如 `bcrypt`、`sqlite3`、`sharp`),替换为不同主版本的 `libnode.so` 后,原生模块需重编才能兼容;
 
 **默认自动处理**：CLI 会扫描 `nodejs-project/node_modules` 下的 `binding.gyp` 判断是否有原生模块,自动决定是否重编,**无需配置**;
 
@@ -177,7 +177,7 @@ Start-Sleep -Seconds 5
 
 ```
 D nativeloader: Load ... libnodejs-mobile-react-native-native-lib.so ... : ok
-I NODEJS-MOBILE: Node.js v22.23.2
+<I NODEJS-MOBILE: Node.js vX.Y.Z>
 ```
 
 **验证 full-icu**：临时在 `server.js` 顶部加：
@@ -280,7 +280,7 @@ SRC=/mnt/d/nodejs-mobile-build/nodejs-mobile
 TMP=/mnt/d/nodejs-mobile-build/libnode-tmp
 OUT=$SRC/out_android
 STRIP=$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip
-HEADERS=/mnt/d/nodejs-mobile-build/node-v22.23.2-headers/include/node
+HEADERS=/mnt/d/nodejs-mobile-build/node-v<实际版本>-headers/include/node
 
 # 编译前检查 full-icu
 if ! grep -q "with-intl=full-icu" $SRC/android_configure.py; then
@@ -348,7 +348,7 @@ chmod +x /mnt/d/nodejs-mobile-build/build-all-archs.sh
 | v18（官方,无 ICU）     | 59.6 MB       | 62.3 MB       |
 | v22（自编译,full-icu） | **约 113 MB** | **约 118 MB** |
 
-**zip 后**：`android-libnode.zip`（含两架构 `.so` + headers）约 88 MB;
+**zip 后**：`android-libnode.zip`（含两架构 `.so` + headers）约 88 MB，具体以实际产物为准；
 
 体积差异约 50 MB,来自三部分：Node v22 核心引擎 + full-icu 数据（约 25–30 MB）+ V8 版本升级;**不是编译出错**;
 
@@ -396,7 +396,7 @@ chmod +x /mnt/d/nodejs-mobile-build/build-all-archs.sh
 
 2. **实际意义有限**：Android 从 2019 年起要求新应用提供 64 位版本,现代设备几乎全部 arm64-v8a;
 
-**替代**：需 32 位 ARM 支持,用 Node.js v18 或 v20;
+**替代**：需 32 位 ARM 支持时，使用提供该架构的 `libnode.so`（如 v18 / v20 产物）；`abiFilters` 需与之对应；
 
 ### 5.2 x86_64 的说明
 
@@ -433,7 +433,7 @@ x86_64 在 x64 主机上**无交叉编译问题**,与 arm64 流程一致;`androi
 4. **多架构建议**：优先保证 `arm64-v8a`,按需补 `x86_64`;`armeabi-v7a` v22+ 已放弃;
 5. **full-icu 是 Express 5 的硬前提**：不要图省事用 `--with-intl=none` 编译;
 6. **`android-libnode.zip` 是唯一发布物**：与官方 nodejs-mobile 结构一致（`bin/` + `include/`）,整目录替换,无需手动改头文件;
-7. **CLI 会自动处理缓存**：替换 `libnode.so` 后跑 `test` / `build`,指纹机制检测到变化自动清 `.cxx` / `android/build` / `app/build`,全量重编;**无需手动清任何缓存**;
+7. **CLI 会自动处理缓存**：替换 `libnode.so` 后跑 `test` / `build`，指纹机制检测到变化时清 `.cxx` / `android/build` / `app/build`，并清 `nodejs-assets` 与依赖快照，触发重装、重编、重优化；**无需手动清任何缓存**；
 
 ---
 
