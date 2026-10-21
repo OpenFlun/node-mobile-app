@@ -1,8 +1,8 @@
 # Android 构建指南
 
-本文档是 [README.md](./README.md) 的**深度附件**。日常使用（`test` / `build`）不需要看——CLI 自动处理。
+本文档是 [README.md](./README.md) 的**深度附件**;日常使用（`test` / `build`）不需要看——CLI 自动处理;
 
-本文档只讲四件事，都是 README 没细说的：
+本文档只讲四件事,都是 README 没细说的：
 1. **环境准备**（JDK / SDK / NDK / adb / 原生模块编译）
 2. **libnode.so**（v18 vs v22、预编译仓库、替换、full-icu 验证）
 3. **Express 版本选择**（踩坑清单）
@@ -14,15 +14,15 @@
 
 ### 1.1 JDK 17（必须）
 
-Android Gradle Plugin 不支持 JDK 18+。
+Android Gradle Plugin 不支持 JDK 18+;
 
 下载：[Adoptium JDK 17](https://adoptium.net/temurin/releases/?version=17)
 
-**CLI 不读 `JAVA_HOME`**，直接用系统 PATH 里的 `java`。确保 `java -version` 输出是 17。
+**CLI 不读 `JAVA_HOME`**,直接用系统 PATH 里的 `java`;确保 `java -version` 输出是 17;
 
 ### 1.2 Android SDK
 
-CLI 自动查找，顺序：
+CLI 自动查找,顺序：
 
 1. `mobileAppConfig.js` 的 `android.sdkPath`
 2. 环境变量 `ANDROID_HOME` / `ANDROID_SDK_ROOT`
@@ -39,7 +39,7 @@ CLI 自动查找，顺序：
 
 ### 1.3 adb
 
-查找顺序同 SDK。常用命令：
+查找顺序同 SDK;常用命令：
 
 ```powershell
 $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
@@ -48,16 +48,16 @@ $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
 
 ### 1.4 原生模块编译（自动检测）
 
-CLI 会扫描 `<buildDir>/nodejs-assets/nodejs-project/node_modules/` 下是否有 `binding.gyp` 文件（原生模块的标志），自动写：
+CLI 会扫描 `<buildDir>/nodejs-assets/nodejs-project/node_modules/` 下是否有 `binding.gyp` 文件（原生模块的标志）,自动写：
 
 ```
-<buildDir>/nodejs-assets/BUILD_NATIVE_MODULES.txt   # 1=有原生模块，0=无
+<buildDir>/nodejs-assets/BUILD_NATIVE_MODULES.txt   # 1=有原生模块,0=无
 ```
 
-- **检测到原生模块**（如 `bcrypt`、`sqlite3`）：写 `1`，并设环境变量 `NODEJS_MOBILE_BUILD_NATIVE_MODULES=1`，`npm install` 时自动重编
-- **未检测到**：写 `0`，跳过编译
+- **检测到原生模块**（如 `bcrypt`、`sqlite3`）：写 `1`,并设环境变量 `NODEJS_MOBILE_BUILD_NATIVE_MODULES=1`,`npm install` 时自动重编
+- **未检测到**：写 `0`,跳过编译
 
-**用户无需手动配置**。检测结果会纳入依赖哈希，装/卸原生模块时会自动触发重装重编。
+**用户无需手动配置**;检测结果会纳入依赖哈希,装/卸原生模块时会自动触发重装重编;
 
 **手动强制重编**：换过 `libnode.so` 但依赖没变、需要重新编译原生模块时：
 
@@ -71,23 +71,23 @@ NODE_MOBILE_FORCE_REBUILD=1 npx node-mobile-app test
 $env:NODE_MOBILE_FORCE_REBUILD=1; npx node-mobile-app test
 ```
 
-**平台限制**：Windows 上 nodejs-mobile 无法编译原生模块（上游限制）。此功能仅 Linux / macOS 可用。
+**平台限制**：Windows 上 nodejs-mobile 无法编译原生模块（上游限制）;此功能仅 Linux / macOS 可用;
 
 ---
 
 ## 二、libnode.so
 
-`nodejs-mobile-react-native` 用它提供 Node.js 运行时。**是否带 full-icu** 决定能跑哪个 Express 版本。
+`nodejs-mobile-react-native` 用它提供 Node.js 运行时;**是否带 full-icu** 决定能跑哪个 Express 版本;
 
 ### 2.0 预编译二进制怎么来的
 
-从 `@flun/nodejs-mobile-react-native` 1.0.1 起，`libnode.so` **不在 npm 包里**，安装时由 postinstall 脚本从 Gitee / GitHub Release 自动下载：
+从 `@flun/nodejs-mobile-react-native` 1.0.1 起,`libnode.so` **不在 npm 包里**,安装时由 postinstall 脚本从 Gitee / GitHub Release 自动下载：
 
-- **下载源**：Gitee 优先，失败自动回退 GitHub
-- **下载内容**：`android-libnode.zip`（约 52 MB），含 `bin/` + `include/`
+- **下载源**：Gitee 优先,失败自动回退 GitHub
+- **下载内容**：`android-libnode.zip`（约 52 MB）,含 `bin/` + `include/`
 - **覆盖目标**：`node_modules/@flun/nodejs-mobile-react-native/android/libnode/`
-- **幂等**：已装版本匹配则跳过，不重复下载
-- **失败处理**：全部源失败时打印下载链接，不中断 npm 安装
+- **幂等**：已装版本匹配则跳过,不重复下载
+- **失败处理**：全部源失败时打印下载链接,不中断 npm 安装
 
 环境变量（按需）：
 
@@ -97,7 +97,7 @@ NODE_MOBILE_PREBUILT_SKIP=1             # 跳过全部下载
 NODE_MOBILE_PREBUILT_ANDROID_SKIP=1     # 只跳过 Android
 ```
 
-**用户不需要手动下载和替换**——除非要换成自编译的版本，见 2.2。
+**用户不需要手动下载和替换**——除非要换成自编译的版本,见 2.2;
 
 ### 2.1 官方 v18（默认自动下载）
 
@@ -113,14 +113,14 @@ NODE_MOBILE_PREBUILT_ANDROID_SKIP=1     # 只跳过 Android
 | armeabi-v7a | 56 MB   |
 | x86_64      | 62.3 MB |
 
-**特点**：`--with-intl=none`，**不含 ICU**。
+**特点**：`--with-intl=none`,**不含 ICU**;
 
 - 不能用 `\p{...}` / `\P{...}` Unicode 正则
 - **必须 Express 4**
 
 ### 2.2 自编译 v22+（推荐）
 
-**官方 v18 已停更**。要跑 Express 5 或新语法，需替换。
+**官方 v18 已停更**;要跑 Express 5 或新语法,需替换;
 
 **预编译产物仓库**：
 
@@ -135,7 +135,7 @@ NODE_MOBILE_PREBUILT_ANDROID_SKIP=1     # 只跳过 Android
 | x86_64      | ✓   | ✓   |
 | armeabi-v7a | ✓   | ✗   |
 
-**未来计划**：v24、v26 逐步适配。
+**未来计划**：v24、v26 逐步适配;
 
 **替换步骤**：
 
@@ -144,9 +144,9 @@ NODE_MOBILE_PREBUILT_ANDROID_SKIP=1     # 只跳过 Android
 3. `mobileAppConfig.js` 的 `android.abiFilters` 只写实际存在的架构（v22 是 `['arm64-v8a', 'x86_64']`）
 4. 跑 `npx node-mobile-app test` 或 `build`
 
-CLI 指纹机制会自动清 `.cxx` / `android/build` / `app/build` 并全量重编——**无需手动清缓存**。
+CLI 指纹机制会自动清 `.cxx` / `android/build` / `app/build` 并全量重编——**无需手动清缓存**;
 
-**完整自编译流程**见 `自定义libnode指南.md`。
+**完整自编译流程**见 `自定义libnode指南.md`;
 
 ### 2.3 验证是否带 full-icu
 
@@ -158,20 +158,20 @@ strings libnode.so | grep -c icudt78l
 - 输出几千（约 4300）→ 带 full-icu
 - 输出 0 → 不带
 
-**体积对照**（实测，strip 后）：
+**体积对照**（实测,strip 后）：
 
-| 版本                    | arm64-v8a | x86_64   |
-| ----------------------- | --------- | -------- |
-| v18（官方，无 ICU）     | 59.6 MB   | 62.3 MB  |
-| v22（自编译，full-icu） | 112.4 MB  | 117.2 MB |
+| 版本                   | arm64-v8a | x86_64   |
+| ---------------------- | --------- | -------- |
+| v18（官方,无 ICU）     | 59.6 MB   | 62.3 MB  |
+| v22（自编译,full-icu） | 112.4 MB  | 117.2 MB |
 
-体积差异约 50 MB，来自三部分：Node v22 核心引擎 + full-icu 数据（约 25–30 MB）+ V8 版本升级。**不是编译出错**。
+体积差异约 50 MB,来自三部分：Node v22 核心引擎 + full-icu 数据（约 25–30 MB）+ V8 版本升级;**不是编译出错**;
 
 ---
 
 ## 三、Express 版本选择（踩坑清单）
 
-**选错版本会在 Node 进程启动时崩溃**，且错误信息极具误导性（如 `number 116 is not a function`）。
+**选错版本会在 Node 进程启动时崩溃**,且错误信息极具误导性（如 `number 116 is not a function`）;
 
 ### 3.1 版本对照
 
@@ -192,7 +192,7 @@ strings libnode.so | grep -c icudt78l
 }
 ```
 
-依赖里如有 `\P{ASCII}` 等 Unicode 正则，改写成 ASCII 等价：
+依赖里如有 `\P{ASCII}` 等 Unicode 正则,改写成 ASCII 等价：
 
 | 原写法      | ASCII 写法     |
 | ----------- | -------------- |
@@ -211,7 +211,7 @@ strings libnode.so | grep -c icudt78l
 **三个前提**：
 
 1. `libnode.so` 确实带 full-icu（用 `strings` 验证过）
-2. **不要**用 `@alloc/path-to-regexp` 替换原版——它的 `exports` 只有 `import` 条件，CJS 下 `require()` 报 `No "exports" main defined`
+2. **不要**用 `@alloc/path-to-regexp` 替换原版——它的 `exports` 只有 `import` 条件,CJS 下 `require()` 报 `No "exports" main defined`
 3. **不要**加任何 `overrides` 强制替换 `path-to-regexp`
 
 ### 3.4 Express 5 路由语法迁移
@@ -243,7 +243,7 @@ express@5.2.1
   └── path-to-regexp@8.4.2
 ```
 
-如出现 `@alloc/path-to-regexp`，说明 `package-lock.json` 里有残留 `overrides`。**彻底清理**：
+如出现 `@alloc/path-to-regexp`,说明 `package-lock.json` 里有残留 `overrides`;**彻底清理**：
 
 ```powershell
 Remove-Item -Recurse -Force node_modules, package-lock.json
@@ -252,9 +252,9 @@ npm install
 
 ### 3.6 三个常见误区
 
-- **误区 1**：以为 `@alloc/path-to-regexp` 能解决 ESM 问题 → 它的 `exports` 也是纯 `import`，`require()` 依然失败
-- **误区 2**：只改路由语法就想让 Express 5 跑 → 若 `libnode.so` 无 full-icu，加载 `path-to-regexp@8` 时仍崩
-- **误区 3**：用 `overrides` 强制替换 `path-to-regexp` → 破坏依赖链，且 `package-lock.json` 会残留解析结果，删掉 `overrides` 也不生效
+- **误区 1**：以为 `@alloc/path-to-regexp` 能解决 ESM 问题 → 它的 `exports` 也是纯 `import`,`require()` 依然失败
+- **误区 2**：只改路由语法就想让 Express 5 跑 → 若 `libnode.so` 无 full-icu,加载 `path-to-regexp@8` 时仍崩
+- **误区 3**：用 `overrides` 强制替换 `path-to-regexp` → 破坏依赖链,且 `package-lock.json` 会残留解析结果,删掉 `overrides` 也不生效
 
 ---
 
@@ -297,7 +297,7 @@ NODEJS-MOBILE: [node-mobile-app] failed: Node 服务 5 秒内未启动 -- 请检
 
 ### 4.2 手动清缓存（兜底）
 
-**正常情况不需要**——CLI 指纹机制自动清。以下仅当指纹判断失效（如手动改过 `node-mobile-app-build/` 内文件）时用：
+**正常情况不需要**——CLI 指纹机制自动清;以下仅当指纹判断失效（如手动改过 `node-mobile-app-build/` 内文件）时用：
 
 ```powershell
 # 最彻底：删整个 RN 工程

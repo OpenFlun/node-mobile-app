@@ -75,7 +75,7 @@ const DEFAULT_CONFIG = {
         return merge(DEFAULT_CONFIG, mod.default || mod);
       }
     }
-    console.log(chalk.yellow('未找到 mobileAppConfig.js，使用默认配置'));
+    console.log(chalk.yellow('未找到 mobileAppConfig.js,使用默认配置'));
     return DEFAULT_CONFIG;
   },
   validateConfig = (config, userProjectDir) => {
@@ -84,22 +84,19 @@ const DEFAULT_CONFIG = {
 
     const pkg = path.join(userProjectDir, 'package.json');
     if (!fs.existsSync(pkg)) errors.push('用户项目缺少 package.json');
-    // 极简防呆：至少 2 段、每段非空、只含 [a-zA-Z0-9_-]，不允许首尾点或连续点
-    // 具体平台是否合法交给 Gradle / Xcode 报错（Android 不允许 -，iOS 允许）
-    if (
-      typeof config.appId !== 'string' ||
-      !/^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(config.appId)
-    )
-      errors.push('appId 格式不合法（需反向域名格式，如 com.example.app）: ' + config.appId);
+    // 极简防呆：至少 2 段、每段非空、只含 [a-zA-Z0-9_-],不允许首尾点或连续点
+    // 具体平台是否合法交给 Gradle / Xcode 报错（Android 不允许 -,iOS 允许）
+    if (typeof config.appId !== 'string' || !/^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/.test(config.appId))
+      errors.push('appId 格式不合法（需反向域名格式,如 com.example.app）: ' + config.appId);
     if (!Number.isInteger(config.versionCode) || config.versionCode < 1) errors.push('versionCode 必须是正整数');
     if (!config.android.abiFilters?.length) errors.push('android.abiFilters 不能为空');
     if (errors.length) {
-      errors.forEach((e) => console.error(chalk.red('  - ' + e)));
+      errors.forEach(e => console.error(chalk.red('  - ' + e)));
       throw new Error('配置校验失败');
     }
     console.log(chalk.green('    ✓ 配置校验通过'));
   },
-  resolveSdkPath = (config) => {
+  resolveSdkPath = config => {
     if (config.android && config.android.sdkPath) return config.android.sdkPath;
     for (const env of ['ANDROID_HOME', 'ANDROID_SDK_ROOT']) {
       const base = process.env[env];

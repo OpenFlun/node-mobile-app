@@ -11,16 +11,16 @@ const SCHEME = 'MyApp',
   /** 检查 xcodebuild 是否存在 */
   checkIosTools = () => {
     const r = run('which', ['xcodebuild'], { stdio: 'pipe' });
-    if (r.status !== 0) throw new Error('未找到 xcodebuild，请安装 Xcode 并运行 xcode-select --install');
+    if (r.status !== 0) throw new Error('未找到 xcodebuild,请安装 Xcode 并运行 xcode-select --install');
   },
   /**
-   * 执行 pod install（若 Pods/ 已存在且 Podfile.lock 未变，cocoapods 会自动跳过）
+   * 执行 pod install（若 Pods/ 已存在且 Podfile.lock 未变,cocoapods 会自动跳过）
    */
   podInstall = iosDir => {
     console.log(chalk.cyan('  pod install ...')), run('pod', ['install'], { cwd: iosDir, inherit: true });
   },
   /**
-   * 把 config.ios.signing.certificate 导入临时 keychain，供 xcodebuild 签名用
+   * 把 config.ios.signing.certificate 导入临时 keychain,供 xcodebuild 签名用
    * 返回 { keychainPath, keychainPassword } 或 null（未配置 / 文件缺失）
    */
   setupSigningKeychain = (buildDir, userProjectDir, config) => {
@@ -29,7 +29,7 @@ const SCHEME = 'MyApp',
 
     const certPath = path.resolve(userProjectDir, signing.certificate);
     if (!fs.existsSync(certPath)) {
-      console.warn(chalk.yellow('  ⚠️  iOS 签名证书不存在，跳过: ' + certPath));
+      console.warn(chalk.yellow('  ⚠️  iOS 签名证书不存在,跳过: ' + certPath));
       return null;
     }
 
@@ -81,7 +81,7 @@ const SCHEME = 'MyApp',
 
     if (teamId) args.push('DEVELOPMENT_TEAM=' + teamId);
 
-    // 若配置了 certificate，导入临时 keychain 并让 xcodebuild 使用
+    // 若配置了 certificate,导入临时 keychain 并让 xcodebuild 使用
     const keychain = setupSigningKeychain(buildDir, userProjectDir, config);
     if (keychain) args.push('OTHER_CODE_SIGN_FLAGS=--keychain ' + keychain.keychainPath);
 
@@ -89,7 +89,7 @@ const SCHEME = 'MyApp',
     return archivePath;
   },
   /**
-   * xcodebuild -exportArchive，导出 .ipa
+   * xcodebuild -exportArchive,导出 .ipa
    * 返回 .ipa 路径
    */
   xcodebuildExport = (buildDir, config, release, outDir, userProjectDir) => {
@@ -97,7 +97,7 @@ const SCHEME = 'MyApp',
     ensureDir(exportDir);
     const archivePath = path.join(iosDir, 'build', SCHEME + '.xcarchive'), method = release ? 'ad-hoc' : 'development',
       signing = (config.ios && config.ios.signing) || {}, teamId = signing.teamId || '',
-      // provisioningProfile 路径 → 取 basename（去扩展名），写进 exportOptions.plist
+      // provisioningProfile 路径 → 取 basename（去扩展名）,写进 exportOptions.plist
       profilePath = signing.provisioningProfile ? path.resolve(userProjectDir, signing.provisioningProfile) : '',
       profileName = profilePath ? path.basename(profilePath).replace(/\.mobileprovision$/i, '') : '',
       plistPath = path.join(iosDir, 'build', 'exportOptions.plist'),

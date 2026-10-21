@@ -9,9 +9,7 @@ const exclusionList = exclusionListModule.default,
     watchFolders: [__dirname, resolve(workspaceRoot, 'node_modules')],
     resolver: {
       nodeModulesPaths: [resolve(__dirname, 'node_modules'), resolve(workspaceRoot, 'node_modules')],
-      blockList: exclusionList([
-        /[/\\]nodejs-assets[/\\].*/
-      ])
+      blockList: exclusionList([/[/\\]nodejs-assets[/\\].*/])
     }
   };
 

@@ -19,7 +19,7 @@ const copyFile = () => {
         if (!fs.existsSync(path.join(targetDir, 'package.json'))) return true;
         if (targetDir === path.resolve(__dirname, '..')) return true;
         if (fs.existsSync(targetFile)) return true; // 目标文件已存在 → 直接返回
-        console.log(`⚠️ 在项目根目录未找到 ${fileName} 文件，正在创建...`);
+        console.log(`⚠️ 在项目根目录未找到 ${fileName} 文件,正在创建...`);
 
         fs.copyFileSync(sourceFile, targetFile);     // 复制源文件到项目根目录
         console.log(`✓ 已创建 ${fileName} 示例文件:${targetFile}`);

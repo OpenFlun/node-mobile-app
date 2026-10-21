@@ -464,15 +464,17 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
                 return null;
             },
             delFile = p => {
-                try { fs.statSync(p).isDirectory() ? fs.rmSync(p, { recursive: true, force: true }) : fs.unlinkSync(p), removed++; } catch { }
+                try {
+                    fs.statSync(p).isDirectory() ? fs.rmSync(p, { recursive: true, force: true }) : fs.unlinkSync(p), removed++;
+                } catch { }
             },
             processDir = d => {
                 let entries;
                 try { entries = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
                 for (const e of entries) {
-                    const full = path.join(d, e.name);
-                    const expectedPrebuilds = targetPlatform === 'ios' ? ['darwin'] : ['android'],
+                    const full = path.join(d, e.name), expectedPrebuilds = targetPlatform === 'ios' ? ['darwin'] : ['android'],
                         prebuildMatch = full.match(/[\\/]prebuilds[\\/](linux|darwin|win32|android)-/i);
+
                     if (prebuildMatch && !expectedPrebuilds.includes(prebuildMatch[1].toLowerCase())) { delFile(full); continue; }
                     if (e.isDirectory()) { processDir(full); continue; }
                     if (JS_RE.test(e.name)) continue;
@@ -496,7 +498,7 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
         return removed;
     },
     // ==================== 清开发文件 ====================
-    pruneDevFiles = async (nmDir) => {
+    pruneDevFiles = async nmDir => {
         let deleted = 0;
         const PATTERNS = [
             /(^|\/)tsconfig\.json$/,
@@ -521,8 +523,7 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
                         walk(full);
                     } else {
                         const rel = toPosix(path.relative(nmDir, full));
-                        if (PATTERNS.some(re => re.test(rel)))
-                            try { fs.unlinkSync(full), deleted++; } catch { }
+                        if (PATTERNS.some(re => re.test(rel))) try { fs.unlinkSync(full), deleted++; } catch { }
                     }
                 }
             };
@@ -536,7 +537,8 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
                 for (const f of fs.readdirSync(d, { withFileTypes: true })) {
                     const full = path.join(d, f.name);
                     if (f.isDirectory()) walk(full);
-                    else if (full.includes(path.sep + 'obj.target' + path.sep) || f.name === 'Makefile' || f.name.endsWith('.orig') || MID_RE.test(f.name)) try { fs.unlinkSync(full), deleted++; } catch { }
+                    else if (full.includes(path.sep + 'obj.target' + path.sep) || f.name === 'Makefile' ||
+                        f.name.endsWith('.orig') || MID_RE.test(f.name)) try { fs.unlinkSync(full), deleted++; } catch { }
                 }
             };
         walk(nmDir);

@@ -21,7 +21,7 @@ const ensureDir = dir => {
     return false;
   },
   /**
-   * 递归复制，exclude 支持 'node_modules/'、'*.log'、'.git/'
+   * 递归复制,exclude 支持 'node_modules/'、'*.log'、'.git/'
    */
   copyDir = (src, dest, exclude = []) => {
     ensureDir(dest);
@@ -36,8 +36,8 @@ const ensureDir = dir => {
   readJson = file => JSON.parse(fs.readFileSync(file, 'utf-8')),
   writeJson = (file, obj) => fs.writeFileSync(file, JSON.stringify(obj, null, 2) + '\n', 'utf-8'),
   /**
-   * 内容不同才写文件，避免不必要的 mtime 变化触发下游（Gradle/Metro）重编
-   * 返回 true 表示写入了，false 表示内容相同跳过
+   * 内容不同才写文件,避免不必要的 mtime 变化触发下游（Gradle/Metro）重编
+   * 返回 true 表示写入了,false 表示内容相同跳过
    */
   writeIfChanged = (file, content) => {
     if (fs.existsSync(file)) {
@@ -49,7 +49,7 @@ const ensureDir = dir => {
     return true;
   },
   /**
-   * 大小和 mtime 都一致才跳过复制，否则复制
+   * 大小和 mtime 都一致才跳过复制,否则复制
    * 用于用户项目 → nodejs-project 的增量复制
    */
   copyFileIfChanged = (src, dst) => {
@@ -70,9 +70,9 @@ const ensureDir = dir => {
   },
   /**
    * 统一的子进程启动：
-   * - Windows：.cmd / .bat 需经 shell；把命令与参数拼成单字符串，
+   * - Windows：.cmd / .bat 需经 shell；把命令与参数拼成单字符串,
    *   避免 spawnSync(bin, args, { shell: true }) 触发 DEP0190。
-   * - 其它平台：不用 shell，参数交由 Node 转义。
+   * - 其它平台：不用 shell,参数交由 Node 转义。
    */
   spawnCmd = (bin, args, baseOpts = {}) => {
     if (process.platform === 'win32') {
@@ -82,7 +82,7 @@ const ensureDir = dir => {
     return spawnSync(bin, args, { ...baseOpts, shell: false });
   },
   /**
-   * 异步 spawn：参数同 spawnCmd，返回 ChildProcess
+   * 异步 spawn：参数同 spawnCmd,返回 ChildProcess
    * @param {string} bin 命令
    * @param {string[]} args 参数
    * @param {object} [baseOpts] spawn 选项
@@ -96,7 +96,7 @@ const ensureDir = dir => {
     return spawn(bin, args, { ...baseOpts, shell: false });
   },
   /**
-   * 执行命令：默认实时输出（inherit）；quiet=true 时捕获输出，成功静默、失败才打印
+   * 执行命令：默认实时输出（inherit）；quiet=true 时捕获输出,成功静默、失败才打印
    */
   run = (bin, args, opts = {}) => {
     const { quiet, ...restOpts } = opts;
@@ -124,7 +124,7 @@ const ensureDir = dir => {
     return r;
   },
   /**
-   * 执行命令：实时输出，仅首行加缩进前缀，其余行原样
+   * 执行命令：实时输出,仅首行加缩进前缀,其余行原样
    * @param {string} bin 命令
    * @param {string[]} args 参数
    * @param {object} [opts] spawn 选项 + prefix
@@ -155,7 +155,7 @@ const ensureDir = dir => {
     const configured = config?.android?.adbPath;
     if (configured) {
       if (fs.existsSync(configured)) return configured;
-      console.warn(chalk.yellow('⚠️  config.android.adbPath 不存在，回退到自动查找: ' + configured));
+      console.warn(chalk.yellow('⚠️  config.android.adbPath 不存在,回退到自动查找: ' + configured));
     }
     // 2. 环境变量 ANDROID_HOME / ANDROID_SDK_ROOT
     for (const env of ['ANDROID_HOME', 'ANDROID_SDK_ROOT']) {
@@ -176,7 +176,7 @@ const ensureDir = dir => {
     return 'adb';
   },
   /**
-   * 定位 hermesc（Hermes 编译器，用于把 JS bundle 编成字节码）
+   * 定位 hermesc（Hermes 编译器,用于把 JS bundle 编成字节码）
    */
   /**
    * 读取安装状态标志（记录上次由本工具安装的包与变体）
@@ -221,7 +221,7 @@ const ensureDir = dir => {
   ensureInstallable = (adb, appId, want, buildDir, serial) => {
     const installed = getInstalledVariant(adb, appId, serial);
     if (installed && installed !== want) {
-      console.log(chalk.yellow(`  已安装 ${installed} 包与待装 ${want} 包签名不同，先卸载`));
+      console.log(chalk.yellow(`  已安装 ${installed} 包与待装 ${want} 包签名不同,先卸载`));
       spawnCmd(adb, [...(serial ? ['-s', serial] : []), 'uninstall', appId], { encoding: 'utf-8' });
     }
   },

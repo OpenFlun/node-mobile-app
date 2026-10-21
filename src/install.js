@@ -25,7 +25,7 @@ const
   },
   /**
    * 内部：判断用户项目的生产依赖里是否含原生模块（binding.gyp）
-   * 按用户根 package.json 的 dependencies 键名，去 userProjectDir/node_modules 下逐个查
+   * 按用户根 package.json 的 dependencies 键名,去 userProjectDir/node_modules 下逐个查
    * 不用扫 nodejs-project/node_modules：全新构建时它还不存在
    */
   hasNativeModules = userProjectDir => {
@@ -100,7 +100,8 @@ const
     const toolchain = path.join(ndkPath, 'toolchains', 'llvm', 'prebuilt', hostTag),
       assetsDir = path.dirname(targetDir), gradleProjectDir = path.join(buildDir, 'android');
     const patchScript = path.join(pluginDir, 'scripts', 'patch-package.js');
-    if (fs.existsSync(patchScript)) run(process.execPath, [patchScript, path.join(targetDir, 'node_modules')], { cwd: targetDir, inherit: true });
+    if (fs.existsSync(patchScript)) run(process.execPath, [patchScript, path.join(targetDir, 'node_modules')],
+      { cwd: targetDir, inherit: true });
     for (const abi of abiFilters) {
       const map = ABI_MAP[abi];
       if (!map) console.error(chalk.red('  [错误] 不支持的 ABI: ' + abi)), process.exit(1);
@@ -119,7 +120,8 @@ const
           RANLIB: path.join(toolchain, 'bin', 'llvm-ranlib' + binSuffix),
           GYP_DEFINES: 'target_arch=' + map.arch + ' v8_target_arch=' + map.arch + ' android_target_arch=' + map.arch +
             ' host_os=' + hostOs + ' OS=android android_ndk_path=' + ndkPath.replace(/\\/g, '/'),
-          PATH: [path.join(ndkPath, 'prebuilt', hostTag, 'bin'), path.join(toolchain, 'bin'), path.join(targetDir, 'node_modules', '.bin'), process.env.PATH].filter(Boolean).join(path.delimiter)
+          PATH: [path.join(ndkPath, 'prebuilt', hostTag, 'bin'), path.join(toolchain, 'bin'),
+          path.join(targetDir, 'node_modules', '.bin'), process.env.PATH].filter(Boolean).join(path.delimiter)
         };
       console.log(chalk.cyan('  ℹ️  编译原生模块 (' + abi + ')...'));
       try { run('npm', ['rebuild', '--build-from-source', '--no-audit', '--no-fund'], { cwd: targetDir, env, quiet: true }); }
@@ -154,7 +156,7 @@ const
     // 在 "NSString* host = nil;" 那一段之后插入 localhost 放行
     const anchor = '  if ([[challenge protectionSpace] authenticationMethod] == NSURLAuthenticationMethodClientCertificate) {',
       idx = c.indexOf(anchor);
-    if (idx === -1) return console.warn(chalk.yellow('  ⚠️  RNCWebViewImpl.m 里未找到锚点，跳过 iOS SSL 补丁'));
+    if (idx === -1) return console.warn(chalk.yellow('  ⚠️  RNCWebViewImpl.m 里未找到锚点,跳过 iOS SSL 补丁'));
 
     const injected = [
       '  // LOCALHOST_SSL_BYPASS_IOS: 对 localhost/127.0.0.1 放行自签名证书（仅本地测试用）',
@@ -172,8 +174,8 @@ const
   },
   /**
    * 装用户项目的生产依赖到 <buildDir>/nodejs-assets/nodejs-project/
-   * 只装 dependencies，不装 devDependencies
-   * 依赖 + 环境未变化且上次构建完成时跳过；否则按需重装 / 仅优化
+   * 只装 dependencies,不装 devDependencies
+   * 依赖 + 环境未变化且上次构建完成时跳过,否则按需重装 / 仅优化
    * 快照记录在 buildDir/.deps-snapshot.json（与桌面版一致）
    */
   installUserDeps = async (targetDir, userProjectDir, config, buildDir, targetPlatform) => {
@@ -201,8 +203,7 @@ const
         envSame = old.platform === targetPlatform && JSON.stringify(old.abiFilters) === JSON.stringify(abiFilters) &&
           old.runtimeMajor === runtimeMajor,
         lastOptimized = old.optimized !== false, selfHashSame = old.optimizeHash === SELF_HASH,
-        installerSame = old.installerHash === installerHash,
-        nmExists = fs.existsSync(nodeModulesDir);
+        installerSame = old.installerHash === installerHash, nmExists = fs.existsSync(nodeModulesDir);
       if (!depsSame) reasons.push('依赖清单已变化');
       if (!verifiedOk) reasons.push('上次构建未完成');
       if (!envSame) reasons.push('运行环境已变化');
@@ -240,8 +241,8 @@ const
       console.log(chalk.green('    ✓ 用户依赖安装完成'));
     }
 
-    if (hasNative && targetPlatform === 'android' && shouldInstall) compileNativeModules(targetDir, userProjectDir, config, buildDir, abiFilters);
-
+    if (hasNative && targetPlatform === 'android' && shouldInstall)
+      compileNativeModules(targetDir, userProjectDir, config, buildDir, abiFilters);
     if (shouldOptimize) {
       console.log(chalk.cyan('  [信息] 正在执行优化...'));
       try {
@@ -260,7 +261,7 @@ const
    */
   patchNodejsMobilePlugin = (userProjectDir, config) => {
     const pluginDir = findPluginDir(userProjectDir);
-    if (!pluginDir) return console.warn(chalk.yellow('  ⚠️  未找到 @flun/nodejs-mobile-react-native 插件，跳过 patch'));
+    if (!pluginDir) return console.warn(chalk.yellow('  ⚠️  未找到 @flun/nodejs-mobile-react-native 插件,跳过 patch'));
 
     const file = path.join(pluginDir, 'android', 'build.gradle'),
       abiList = config.android.abiFilters.map((x) => `"${x}"`).join(', ');
@@ -271,7 +272,6 @@ const
 
     if (c !== before) fs.writeFileSync(file, c, 'utf-8'), console.log(chalk.green(`  ✓ 已设置插件 abiFilters = [${abiList}]`));
   },
-
   /**
    * 让 react-native-webview 对 localhost 自签名证书放行
    * Android: patch RNCWebViewClient.java

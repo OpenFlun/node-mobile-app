@@ -14,7 +14,9 @@ import { generateMainJs, generateRuntime } from '../generate.js';
 import { checkAndResetCache } from '../fingerprint.js';
 import { patchAppConfig, patchAndroidConfig, patchSigning, patchIcon, patchIosConfig, patchIosIcon } from '../patcher.js';
 import { ensureMac, checkIosTools, podInstall } from '../platform-ios.js';
-import { run, runSilent, runStream, findAdb, ensureDir, findHermesc, ensureInstallable, writeInstallState, spawnCmdAsync } from '../utils.js';
+import {
+  run, runSilent, runStream, findAdb, ensureDir, findHermesc, ensureInstallable, writeInstallState, spawnCmdAsync
+} from '../utils.js';
 import chalk from 'chalk';
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..'),
@@ -95,14 +97,15 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
         fs.copyFileSync(hbcPath, bundlePath), fs.unlinkSync(hbcPath);
         console.log(chalk.green('    ✓ 已替换为 Hermes 字节码'));
       }
-      else console.warn(chalk.yellow('  ⚠️  未找到 hermesc，跳过字节码编译（离线启动会较慢）'));
+      else console.warn(chalk.yellow('  ⚠️  未找到 hermesc,跳过字节码编译（离线启动会较慢）'));
 
-      const mergedAsset = path.join(buildDir, 'android', 'app', 'build', 'intermediates', 'assets', 'debug', 'mergeDebugAssets', 'index.android.bundle');
+      const mergedAsset = path.join(buildDir, 'android', 'app', 'build', 'intermediates', 'assets', 'debug',
+        'mergeDebugAssets', 'index.android.bundle');
       if (fs.existsSync(mergedAsset)) {
         const h = f => createHash('sha256').update(fs.readFileSync(f)).digest('hex');
         if (h(bundlePath) !== h(mergedAsset)) {
           fs.rmSync(path.dirname(mergedAsset), { recursive: true, force: true });
-          console.log(chalk.gray('  bundle 已变化，清理 mergeDebugAssets 缓存'));
+          console.log(chalk.gray('  bundle 已变化,清理 mergeDebugAssets 缓存'));
         }
       }
       console.log(chalk.cyan(`\n[9/${total}] 配置 adb 端口转发`));
@@ -120,25 +123,28 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
       });
       if (!await metroReady()) {
         console.log(chalk.gray('  启动 Metro...'));
-        const metroLog = fs.openSync(path.join(buildDir, '.metro.log'), 'a');
-        const metro = spawnCmdAsync('npx', ['react-native', 'start'], {
-          cwd: buildDir, detached: true, stdio: ['ignore', metroLog, metroLog]
-        });
+        const metroLog = fs.openSync(path.join(buildDir, '.metro.log'), 'a'),
+          metro = spawnCmdAsync('npx', ['react-native', 'start'], {
+            cwd: buildDir, detached: true, stdio: ['ignore', metroLog, metroLog]
+          });
         metro.unref();
         let ready = false;
         for (let i = 0; i < 60; i++) {
           await new Promise(r => setTimeout(r, 500));
-          if (await metroReady()) { ready = true; console.log(chalk.green('    ✓ Metro 已就绪（后台常驻，支持热更新）')); break; }
+          if (await metroReady()) { ready = true, console.log(chalk.green('    ✓ Metro 已就绪（后台常驻,支持热更新）')); break; }
         }
-        if (!ready) console.log(chalk.yellow('  ⚠️  Metro 30 秒内未就绪，详见 .metro.log；app 将回落到本地 bundle'));
+        if (!ready) console.log(chalk.yellow('  ⚠️  Metro 30 秒内未就绪,详见 .metro.log；app 将回落到本地 bundle'));
       }
       console.log(chalk.cyan(`\n[10/${total}] 编译 Debug 包`));
       const gradlew = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
-      if (process.env.OPTIMIZE_DEBUG) {
-        await runStream(gradlew, ['assembleDebug'], { cwd: path.join(buildDir, 'android'), env: { ...process.env, NODE_MOBILE_MODE: 'test' } });
-      } else {
+      if (process.env.OPTIMIZE_DEBUG) await runStream(gradlew, ['assembleDebug'], {
+        cwd: path.join(buildDir, 'android'), env: { ...process.env, NODE_MOBILE_MODE: 'test' }
+      });
+      else {
         console.log(chalk.gray('  编译中...'));
-        run(gradlew, ['assembleDebug'], { cwd: path.join(buildDir, 'android'), env: { ...process.env, NODE_MOBILE_MODE: 'test' }, quiet: true });
+        run(gradlew, ['assembleDebug'], {
+          cwd: path.join(buildDir, 'android'), env: { ...process.env, NODE_MOBILE_MODE: 'test' }, quiet: true
+        });
         console.log(chalk.green('    ✓ 编译完成'));
       }
 

@@ -4,7 +4,7 @@ import { writeIfChanged } from './utils.js';
 import chalk from 'chalk';
 
 /**
- * 生成 main.js（桥接代码，用户不需要手写）
+ * 生成 main.js（桥接代码,用户不需要手写）
  *
  * 上报机制（通过 rn-bridge channel 发消息给 App.tsx）：
  *   - 'Node started on <URL>'  server.js 成功调用 listen
@@ -14,9 +14,8 @@ const generateMainJs = (targetDir, config, moduleType) => {
   const entry = config.serverPath.startsWith('./') ? config.serverPath : './' + config.serverPath,
     entryLabel = config.serverPath, hb = config.advanced.heartbeatInterval,
     body = `(async () => {
-    const rn_bridge = require('rn-bridge');
-    const net = require('net'), https = require('https'), USER_ENTRY = ${JSON.stringify(entry)},
-     ENTRY_LABEL = ${JSON.stringify(entryLabel)}, START_TIMEOUT_MS = 5000;
+    const rn_bridge = require('rn-bridge'), net = require('net'), https = require('https'),
+    USER_ENTRY = ${JSON.stringify(entry)}, ENTRY_LABEL = ${JSON.stringify(entryLabel)}, START_TIMEOUT_MS = 5000;
 
     let resolved = false;
     function emitUrl(url) {
@@ -44,7 +43,7 @@ const generateMainJs = (targetDir, config, moduleType) => {
       emitFailure('未处理的 Promise rejection', String(reason));
     });
 
-    // 拦截 net.Server.prototype.listen，捕获协议和真实端口
+    // 拦截 net.Server.prototype.listen,捕获协议和真实端口
     const origListen = net.Server.prototype.listen;
     net.Server.prototype.listen = function (...args) {
       const server = this;
@@ -77,9 +76,7 @@ const generateMainJs = (targetDir, config, moduleType) => {
 
     ${config.advanced.keepAlive === false ? '// keepAlive: false — 不发送心跳' : "setInterval(() => rn_bridge.channel.send('heartbeat'), " + hb + ");"}
 
-    rn_bridge.channel.on('message', (msg) => {
-      rn_bridge.channel.send('Echo: ' + msg);
-    });
+    rn_bridge.channel.on('message', msg => rn_bridge.channel.send('Echo: ' + msg));
     })();`,
     header = moduleType === 'module'
       ? `import { createRequire } from 'module';\nconst require = createRequire(import.meta.url);\n\n` : '',
@@ -97,7 +94,7 @@ const generateMainJs = (targetDir, config, moduleType) => {
         mixedContentMode: config.webview.mixedContentMode,
         backgroundColor: config.webview.backgroundColor
       },
-    }, content = `// 自动生成，请勿手改\nexport default ${JSON.stringify(data, null, 2)} as const;\n`,
+    }, content = `// 自动生成,请勿手改\nexport default ${JSON.stringify(data, null, 2)} as const;\n`,
       changed = writeIfChanged(path.join(buildDir, 'mobileApp.runtime.ts'), content);
     console.log(chalk.green(changed ? '    ✓ 已生成 mobileApp.runtime.ts' : '    ✓ mobileApp.runtime.ts 无变化'));
   };
