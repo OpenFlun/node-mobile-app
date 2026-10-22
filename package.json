@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@babel/core": "^8.0.7",
-    "@eslint-react/eslint-plugin": "^5.28.2",
+    "@eslint-react/eslint-plugin": "^5.28.0",
     "@eslint/js": "^10.0.1",
     "@flun/nodejs-mobile-react-native": "*",
     "@react-native/babel-preset": "^0.88.0",
