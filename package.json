@@ -43,7 +43,7 @@
     "@babel/core": "^8.0.7",
     "@eslint-react/eslint-plugin": "^5.28.0",
     "@eslint/js": "^10.0.1",
-    "@flun/nodejs-mobile-react-native": "^2.1.0",
+    "@flun/nodejs-mobile-react-native": "*",
     "@react-native/babel-preset": "^0.88.0",
     "@react-native/metro-config": "^0.88.0",
     "@react-native-community/cli": "^20.2.0",
