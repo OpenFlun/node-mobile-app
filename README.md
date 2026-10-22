@@ -25,13 +25,13 @@
 
 ## 环境要求(最低)
 
-| 项           | 要求                                                                |
-| ------------ | ------------------------------------------------------------------- |
-| Node.js      | 需满足 `package.json` 的 `engines.node` 字段                        |
+| 项           | 要求                                                             |
+| ------------ | ---------------------------------------------------------------- |
+| Node.js      | 需满足 `package.json` 的 `engines.node` 字段                     |
 | Android 构建 | JDK **17**,Android SDK(minSdk 29 / targetSdk 36 / compileSdk 37) |
-| iOS 构建     | macOS + 完整 Xcode + CocoaPods                                      |
-| 可选         | watchman(提升 Metro 文件监听性能)                                 |
-| Windows 额外 | Visual Studio + Git for Windows(仅编译原生模块时需要,见下方说明)  |
+| iOS 构建     | macOS + 完整 Xcode + CocoaPods                                   |
+| 可选         | watchman(提升 Metro 文件监听性能)                                |
+| Windows 额外 | Visual Studio + Git for Windows(仅编译原生模块时需要,见下方说明) |
 
 **JDK 必须是 17**,Android Gradle Plugin 目前不支持更高版本;
 
@@ -160,23 +160,23 @@ npx node-mobile-app build --release
 
 ## 命令说明
 
-| 命令                                  | 用途                                                                              |
-| ------------------------------------- | --------------------------------------------------------------------------------- |
+| 命令                                  | 用途                                                                                               |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | `npx node-mobile-app test`            | 编译并安装到设备(**需连 USB**);自动启动 Metro 并后台常驻,支持热更新;设备已装包签名不一致时自动卸载 |
-| `npx node-mobile-app test --ios`      | iOS 版(仅 macOS)                                                                |
-| `npx node-mobile-app build`           | 打 debug APK(**离线可用**)                                                      |
-| `npx node-mobile-app build --release` | 打 release APK(默认用 debug keystore 签名,可安装;上架需配置 `android.signing`) |
-| `npx node-mobile-app build --ios`     | 打 IPA(仅 macOS)                                                                |
-| `npx node-mobile-app clean`           | 清理构建缓存                                                                      |
+| `npx node-mobile-app test --ios`      | iOS 版(仅 macOS)                                                                                   |
+| `npx node-mobile-app build`           | 打 debug APK(**离线可用**)                                                                         |
+| `npx node-mobile-app build --release` | 打 release APK(默认用 debug keystore 签名,可安装;上架需配置 `android.signing`)                     |
+| `npx node-mobile-app build --ios`     | 打 IPA(仅 macOS)                                                                                   |
+| `npx node-mobile-app clean`           | 清理构建缓存                                                                                       |
 
 ### 常用选项
 
-| 选项            | 用途                                           |
-| --------------- | ---------------------------------------------- |
-| `--ios`         | 目标平台为 iOS(默认 Android)                 |
-| `--release`     | 打 release 包(仅 `build`)                    |
-| `--device <id>` | 指定设备(`test`)                             |
-| `--arch <abi>`  | 指定 ABI,逗号分隔(`build`,仅 Android)        |
+| 选项            | 用途                                        |
+| --------------- | ------------------------------------------- |
+| `--ios`         | 目标平台为 iOS(默认 Android)                |
+| `--release`     | 打 release 包(仅 `build`)                   |
+| `--device <id>` | 指定设备(`test`)                            |
+| `--arch <abi>`  | 指定 ABI,逗号分隔(`build`,仅 Android)       |
 | `--debug`       | 显示详细日志(优化各阶段明细,各命令完整输出) |
 
 ### 安装 APK 到手机
@@ -231,14 +231,14 @@ adb install -r "./out/myapp-1.0.0-release.apk"
 
 ### 必填
 
-| 字段         | 类型     | 说明                                      |
-| ------------ | -------- | ----------------------------------------- |
+| 字段         | 类型     | 说明                                    |
+| ------------ | -------- | --------------------------------------- |
 | `serverPath` | `string` | Node 启动脚本路径(默认 `'./server.js'`) |
 
 ### 应用信息
 
-| 字段          | 类型             | 说明                                                                       |
-| ------------- | ---------------- | -------------------------------------------------------------------------- |
+| 字段          | 类型             | 说明                                                                     |
+| ------------- | ---------------- | ------------------------------------------------------------------------ |
 | `appName`     | `string \| null` | 应用显示名称(默认从 `package.json` 的 `name` 读)                         |
 | `outputDir`   | `string \| null` | APK / IPA 输出目录(默认 `./out`)                                         |
 | `appId`       | `string`         | 应用唯一标识,反向域名格式(Android `applicationId` / iOS Bundle ID)       |
@@ -247,36 +247,36 @@ adb install -r "./out/myapp-1.0.0-release.apk"
 
 ### WebView
 
-| 字段                  | 类型      | 默认                | 说明                                                                                       |
-| --------------------- | --------- | ------------------- | ------------------------------------------------------------------------------------------ |
-| `showLoading`         | `boolean` | `true`              | 是否显示加载指示器                                                                         |
-| `loadingText`         | `string`  | `'正在启动服务...'` | 加载提示文字                                                                               |
-| `enableJavaScript`    | `boolean` | `true`              | 是否启用 JavaScript                                                                        |
-| `enableDomStorage`    | `boolean` | `true`              | 是否启用 DOM Storage                                                                       |
-| `allowFileAccess`     | `boolean` | `true`              | 是否允许访问本地文件                                                                       |
+| 字段                  | 类型      | 默认                | 说明                                                                                      |
+| --------------------- | --------- | ------------------- | ----------------------------------------------------------------------------------------- |
+| `showLoading`         | `boolean` | `true`              | 是否显示加载指示器                                                                        |
+| `loadingText`         | `string`  | `'正在启动服务...'` | 加载提示文字                                                                              |
+| `enableJavaScript`    | `boolean` | `true`              | 是否启用 JavaScript                                                                       |
+| `enableDomStorage`    | `boolean` | `true`              | 是否启用 DOM Storage                                                                      |
+| `allowFileAccess`     | `boolean` | `true`              | 是否允许访问本地文件                                                                      |
 | `mixedContentMode`    | `string`  | `'always'`          | 混合内容模式:`never` / `always` / `compatibility`                                         |
 | `backgroundColor`     | 见下      | `'#ffffff'`         | WebView 背景色;支持:固定色 `'#ffffff'` / 跟随系统 `'system'` / 深浅两值 `{ light, dark }` |
-| `allowSelfSignedCert` | `boolean` | `false`             | 见下文"HTTPS 自签证书"                                                                   |
+| `allowSelfSignedCert` | `boolean` | `false`             | 见下文"HTTPS 自签证书"                                                                    |
 
 ### Android
 
-| 字段                    | 类型             | 默认                 | 说明                                                                                                      |
-| ----------------------- | ---------------- | -------------------- | --------------------------------------------------------------------------------------------------------- |
-| `sdkPath`               | `string \| null` | `null`               | Android SDK 路径(默认自动查找)                                                                          |
-| `adbPath`               | `string \| null` | `null`               | adb 路径(默认自动查找)                                                                                  |
-| `minSdkVersion`         | `int`            | `29`                 | 最低 SDK(29=Android 10.0)                                                                               |
-| `targetSdkVersion`      | `int`            | `36`                 | 目标 SDK                                                                                                  |
-| `compileSdkVersion`     | `int`            | `37`                 | 编译 SDK                                                                                                  |
-| `buildToolsVersion`     | `string`         | `'37.0.0'`           | 构建工具版本                                                                                              |
-| `abiFilters`            | `string[]`       | `['arm64-v8a']`      | 打包架构(真机 `arm64-v8a`,模拟器加 `x86_64`)                                                            |
-| `icon`                  | `string`         | `'./build/icon.png'` | 应用图标(建议 512×512 PNG)                                                                              |
-| `usesCleartextTraffic`  | `boolean`        | `true`               | 是否允许明文 HTTP                                                                                         |
-| `permissions`           | `string[]`       | `[]`                 | 额外权限(如 `'android.permission.CAMERA'`)                                                              |
+| 字段                    | 类型             | 默认                 | 说明                                                                                                 |
+| ----------------------- | ---------------- | -------------------- | ---------------------------------------------------------------------------------------------------- |
+| `sdkPath`               | `string \| null` | `null`               | Android SDK 路径(默认自动查找)                                                                       |
+| `adbPath`               | `string \| null` | `null`               | adb 路径(默认自动查找)                                                                               |
+| `minSdkVersion`         | `int`            | `29`                 | 最低 SDK(29=Android 10.0)                                                                            |
+| `targetSdkVersion`      | `int`            | `36`                 | 目标 SDK                                                                                             |
+| `compileSdkVersion`     | `int`            | `37`                 | 编译 SDK                                                                                             |
+| `buildToolsVersion`     | `string`         | `'37.0.0'`           | 构建工具版本                                                                                         |
+| `abiFilters`            | `string[]`       | `['arm64-v8a']`      | 打包架构(真机 `arm64-v8a`,模拟器加 `x86_64`)                                                         |
+| `icon`                  | `string`         | `'./build/icon.png'` | 应用图标(建议 512×512 PNG)                                                                           |
+| `usesCleartextTraffic`  | `boolean`        | `true`               | 是否允许明文 HTTP                                                                                    |
+| `permissions`           | `string[]`       | `[]`                 | 额外权限(如 `'android.permission.CAMERA'`)                                                           |
 | `signing`               | `object`         | -                    | 自定义签名配置.**不填则用模板自带的 debug keystore 签名**(可安装测试,不可上架);填则以下 4 项均为必填 |
-| `signing.keystore`      | `string`         | -                    | keystore 路径(相对你的项目根)                                                                           |
-| `signing.storePassword` | `string`         | -                    | keystore 密码                                                                                             |
-| `signing.keyAlias`      | `string`         | -                    | 密钥别名                                                                                                  |
-| `signing.keyPassword`   | `string`         | -                    | 密钥密码(通常与 `storePassword` 相同)                                                                   |
+| `signing.keystore`      | `string`         | -                    | keystore 路径(相对你的项目根)                                                                        |
+| `signing.storePassword` | `string`         | -                    | keystore 密码                                                                                        |
+| `signing.keyAlias`      | `string`         | -                    | 密钥别名                                                                                             |
+| `signing.keyPassword`   | `string`         | -                    | 密钥密码(通常与 `storePassword` 相同)                                                                |
 
 #### 生成自签名 keystore
 
@@ -320,43 +320,43 @@ signing: {
 
 ### iOS
 
-| 字段                          | 类型     | 默认                 | 说明                                                   |
-| ----------------------------- | -------- | -------------------- | ------------------------------------------------------ |
-| `deploymentTarget`            | `string` | `'15.1'`             | 最低 iOS 版本                                          |
+| 字段                          | 类型     | 默认                 | 说明                                                 |
+| ----------------------------- | -------- | -------------------- | ---------------------------------------------------- |
+| `deploymentTarget`            | `string` | `'15.1'`             | 最低 iOS 版本                                        |
 | `icon`                        | `string` | `'./build/icon.png'` | 应用图标(建议 1024×1024 PNG)                         |
-| `signing.teamId`              | `string` | -                    | Apple Developer Team ID                                |
+| `signing.teamId`              | `string` | -                    | Apple Developer Team ID                              |
 | `signing.provisioningProfile` | `string` | -                    | 描述文件路径(写入 `exportOptions.plist`)             |
 | `signing.certificate`         | `string` | -                    | P12 证书路径(导入临时 keychain 供 xcodebuild 签名用) |
-| `signing.certificatePassword` | `string` | -                    | P12 密码                                               |
+| `signing.certificatePassword` | `string` | -                    | P12 密码                                             |
 
 ### 高级
 
 | 字段                         | 类型      | 默认   | 说明                       |
 | ---------------------------- | --------- | ------ | -------------------------- |
 | `advanced.keepAlive`         | `boolean` | `true` | 是否发送心跳保持 Node 进程 |
-| `advanced.heartbeatInterval` | `int`     | `5000` | 心跳间隔(毫秒)           |
+| `advanced.heartbeatInterval` | `int`     | `5000` | 心跳间隔(毫秒)             |
 
 ### 扩展点
 
-| 字段                  | 类型       | 默认 | 说明                                                  |
-| --------------------- | ---------- | ---- | ----------------------------------------------------- |
+| 字段                  | 类型       | 默认 | 说明                                                |
+| --------------------- | ---------- | ---- | --------------------------------------------------- |
 | `keepFiles`           | `string[]` | `[]` | 不重置的模板文件(路径相对 `node-mobile-app-build/`) |
 | `extraRnDependencies` | `string[]` | `[]` | 额外 RN 原生依赖包名(需先安装在你的开发字段中)      |
 
 ### 排除 / 白名单
 
-| 字段           | 说明                                                                         |
-| -------------- | ---------------------------------------------------------------------------- |
-| `excludeFiles` | 复制到 build 目录时跳过的文件/目录(支持 `*.log`,`build/` 等)              |
+| 字段           | 说明                                                                       |
+| -------------- | -------------------------------------------------------------------------- |
+| `excludeFiles` | 复制到 build 目录时跳过的文件/目录(支持 `*.log`,`build/` 等)               |
 | `allowScripts` | 移动端 Node 环境里允许跑安装脚本的包(会写入 `nodejs-project/package.json`) |
 
 ### node_modules 优化
 
 构建时自动优化 `node_modules`(默认开启,无需配置),减少打包文件数与体积,加速启动.
 
-| 字段      | 类型       | 默认   | 说明                                                        |
-| --------- | ---------- | ------ | ----------------------------------------------------------- |
-| `enabled` | `boolean`  | `true` | 是否启用优化                                                |
+| 字段      | 类型       | 默认   | 说明                                                      |
+| --------- | ---------- | ------ | --------------------------------------------------------- |
+| `enabled` | `boolean`  | `true` | 是否启用优化                                              |
 | `exclude` | `string[]` | `[]`   | 排除优化时异常或不想优化的包(写 `package.json` 的 `name`) |
 
 **编译与优化顺序**:先交叉编译原生模块(见 `install.js`),再执行以下六阶段优化:
@@ -394,11 +394,11 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Ser
 
 `webview.allowSelfSignedCert` 控制是否放行**不受信任的 HTTPS 证书**:
 
-| 场景                                          | 是否受开关影响      |
-| --------------------------------------------- | ------------------- |
-| HTTP                                          | 无关                |
+| 场景                                        | 是否受开关影响      |
+| ------------------------------------------- | ------------------- |
+| HTTP                                        | 无关                |
 | HTTPS + 真证书(Let's Encrypt 等)            | 无关                |
-| HTTPS + 自签证书 + 已装进设备信任库           | 无关                |
+| HTTPS + 自签证书 + 已装进设备信任库         | 无关                |
 | HTTPS + 自签证书 + 未装设备(本地测试最常见) | **必须设为 `true`** |
 
 **实现方式**:
@@ -417,8 +417,8 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Ser
 | 运行时版本   | 官方提供多个版本,可用 `NODE_MOBILE_PREBUILT_VERSION` 切换 | **当前为 v18.20.4**,更高版本后续逐步适配 |
 | Express 版本 | 产物带 full-icu,4.x / 5.x 均可用                          | 当前产物不带 full-icu,**必须用 4.x**     |
 | full-icu     | 自 v22.23.2 产物起支持                                    | 暂无                                     |
-| `test` 离线  | ✓(内置 bundle)                                          | ✓(需 `FORCE_BUNDLING=1`)               |
-| 图标尺寸     | 5 个密度(48~192)                                        | 9 个尺寸(40~1024)                      |
+| `test` 离线  | ✓(内置 bundle)                                            | ✓(需 `FORCE_BUNDLING=1`)                 |
+| 图标尺寸     | 5 个密度(48~192)                                          | 9 个尺寸(40~1024)                        |
 
 **iOS 运行时版本**:iOS 附件的实际运行时版本随适配进度变化,**当前对应 v18.20.4**;如需更高版本,可克隆 [nodejs-mobile 仓库](https://github.com/OpenFlun/nodejs-mobile) 自行编译 `NodeMobile.xcframework`,流程与 Android 自编译 `libnode.so` 类似(见 `自定义libnode指南.md`);
 
@@ -511,9 +511,9 @@ Express 5 的路由语法与 4 不同(如 `app.get('*')` 要改成 `app.get('/{*
 
 从 `@flun/nodejs-mobile-react-native` 1.0.1 起,两套预编译二进制**不在 npm 包里**,改为 postinstall 阶段自动从 Gitee / GitHub Release 下载:
 
-| 资源                             | 目标位置                                                                    |
-| -------------------------------- | --------------------------------------------------------------------------- |
-| `android-libnode.zip`            | `node_modules/@flun/nodejs-mobile-react-native/android/libnode/`            |
+| 资源                           | 目标位置                                                                    |
+| ------------------------------ | --------------------------------------------------------------------------- |
+| `android-libnode.zip`          | `node_modules/@flun/nodejs-mobile-react-native/android/libnode/`            |
 | `ios-nodemobile.zip`(仅 macOS) | `node_modules/@flun/nodejs-mobile-react-native/ios/NodeMobile.xcframework/` |
 
 - 默认下载版本以 `@flun/nodejs-mobile-react-native` 的 `package.json` 中 `prebuiltAssets.version` 字段为准
