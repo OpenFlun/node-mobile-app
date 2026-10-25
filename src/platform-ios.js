@@ -6,7 +6,7 @@ import chalk from 'chalk';
 const SCHEME = 'MyApp',
   /** iOS 相关命令只能在 macOS 上跑 */
   ensureMac = () => {
-    if (process.platform !== 'darwin') throw new Error('iOS 构建只能在 macOS 上执行（当前平台: ' + process.platform + '）');
+    if (process.platform !== 'darwin') throw new Error('iOS 构建只能在 macOS 上执行(当前平台: ' + process.platform + ')');
   },
   /** 检查 xcodebuild 是否存在 */
   checkIosTools = () => {
@@ -14,14 +14,14 @@ const SCHEME = 'MyApp',
     if (r.status !== 0) throw new Error('未找到 xcodebuild,请安装 Xcode 并运行 xcode-select --install');
   },
   /**
-   * 执行 pod install（若 Pods/ 已存在且 Podfile.lock 未变,cocoapods 会自动跳过）
+   * 执行 pod install(若 Pods/ 已存在且 Podfile.lock 未变,cocoapods 会自动跳过)
    */
   podInstall = iosDir => {
     console.log(chalk.cyan('  pod install ...')), run('pod', ['install'], { cwd: iosDir, inherit: true });
   },
   /**
    * 把 config.ios.signing.certificate 导入临时 keychain,供 xcodebuild 签名用
-   * 返回 { keychainPath, keychainPassword } 或 null（未配置 / 文件缺失）
+   * 返回 { keychainPath, keychainPassword } 或 null(未配置 / 文件缺失)
    */
   setupSigningKeychain = (buildDir, userProjectDir, config) => {
     const signing = config.ios && config.ios.signing;
@@ -37,7 +37,7 @@ const SCHEME = 'MyApp',
     ensureDir(keychainDir);
     const keychainPath = path.join(keychainDir, 'build.keychain-db'), keychainPassword = 'nmapp' + Date.now();
 
-    // 清掉同名的旧 keychain（重复构建时）
+    // 清掉同名的旧 keychain(重复构建时)
     if (fs.existsSync(keychainPath)) fs.rmSync(keychainPath, { force: true });
     console.log(chalk.cyan('  创建临时 keychain 并导入证书 ...'));
     run('security', ['create-keychain', '-p', keychainPassword, keychainPath], { quiet: true });
@@ -64,7 +64,7 @@ const SCHEME = 'MyApp',
    */
   xcodebuildArchive = (buildDir, config, release, userProjectDir) => {
     const iosDir = path.join(buildDir, 'ios'), workspace = path.join(iosDir, SCHEME + '.xcworkspace');
-    if (!fs.existsSync(workspace)) throw new Error('未找到 ' + workspace + '（pod install 是否成功？）');
+    if (!fs.existsSync(workspace)) throw new Error('未找到 ' + workspace + '(pod install 是否成功?)');
 
     const archiveDir = path.join(iosDir, 'build');
     ensureDir(archiveDir);
@@ -97,7 +97,7 @@ const SCHEME = 'MyApp',
     ensureDir(exportDir);
     const archivePath = path.join(iosDir, 'build', SCHEME + '.xcarchive'), method = release ? 'ad-hoc' : 'development',
       signing = (config.ios && config.ios.signing) || {}, teamId = signing.teamId || '',
-      // provisioningProfile 路径 → 取 basename（去扩展名）,写进 exportOptions.plist
+      // provisioningProfile 路径 → 取 basename(去扩展名),写进 exportOptions.plist
       profilePath = signing.provisioningProfile ? path.resolve(userProjectDir, signing.provisioningProfile) : '',
       profileName = profilePath ? path.basename(profilePath).replace(/\.mobileprovision$/i, '') : '',
       plistPath = path.join(iosDir, 'build', 'exportOptions.plist'),

@@ -4,9 +4,9 @@ import { writeIfChanged } from './utils.js';
 import chalk from 'chalk';
 
 /**
- * 生成 main.js（桥接代码,用户不需要手写）
+ * 生成 main.js(桥接代码,用户不需要手写)
  *
- * 上报机制（通过 rn-bridge channel 发消息给 App.tsx）：
+ * 上报机制(通过 rn-bridge channel 发消息给 App.tsx):
  *   - 'Node started on <URL>'  server.js 成功调用 listen
  *   - 'Node failed: <原因>'    加载异常或 5 秒内未捕获 listen
  */
@@ -74,7 +74,9 @@ const generateMainJs = (targetDir, config, moduleType) => {
       }
     })();
 
-    ${config.advanced.keepAlive === false ? '// keepAlive: false — 不发送心跳' : "setInterval(() => rn_bridge.channel.send('heartbeat'), " + hb + ");"}
+    ${config.advanced.keepAlive === false
+      ? '// keepAlive: false - 不发送心跳'
+      : "setInterval(() => rn_bridge.channel.send('heartbeat'), " + hb + ");"}
 
     rn_bridge.channel.on('message', msg => rn_bridge.channel.send('Echo: ' + msg));
     })();`,

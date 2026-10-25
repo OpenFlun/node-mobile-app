@@ -20,8 +20,9 @@ const runClean = async () => {
 
   for (const t of targets) {
     if (fs.existsSync(t.path))
-      removeDir(t.path), console.log(chalk.green('已清理: ' + t.label + ' -> ' + (path.relative(userProjectDir, t.path) || t.path)));
-    else console.log(chalk.gray('跳过（不存在）: ' + t.label));
+      removeDir(t.path),
+        console.log(chalk.green('已清理: ' + t.label + ' -> ' + (path.relative(userProjectDir, t.path) || t.path)));
+    else console.log(chalk.gray('跳过(不存在): ' + t.label));
   }
 
   console.log(chalk.green('\n✅ 清理完成'));

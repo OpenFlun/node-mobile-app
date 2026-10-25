@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "_comment": "dependencies 的版本号由 @flun/node-mobile-app 在 copyTemplate 阶段从主包 package.json 同步；此处 \"*\" 仅为占位，请勿依赖此文件里的值。",
+  "_comment": "版本号由 @flun/node-mobile-app 在 copyTemplate 阶段从主包同步;此处 \"*\" 仅为占位;",
   "dependencies": {
     "react": "*",
     "react-native": "*",

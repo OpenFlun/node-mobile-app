@@ -8,17 +8,17 @@ const HELP = `
 @flun/node-mobile-app
 
 指令:
-  node-mobile-app test              编译并安装到设备（Android,需连 USB,走 Metro 热更新）
-  node-mobile-app test --ios        iOS 版（仅 macOS）
-  node-mobile-app build             打 debug APK（Android,离线可用）
-  node-mobile-app build --release   打 release APK（Android,默认 debug keystore 签名,可安装）
-  node-mobile-app build --ios       打 IPA（仅 macOS）
-  node-mobile-app clean             清理构建缓存（不限平台）
+  node-mobile-app test              编译并安装到设备(Android,需连 USB,走 Metro 热更新)
+  node-mobile-app test --ios        iOS 版(仅 macOS)
+  node-mobile-app build             打 debug APK(Android,离线可用)
+  node-mobile-app build --release   打 release APK(Android,默认 debug keystore 签名,可安装)
+  node-mobile-app build --ios       打 IPA(仅 macOS)
+  node-mobile-app clean             清理构建缓存(不限平台)
 
 选项:
-  --device <id>   指定设备（仅 test）
-  --arch <abi>    指定 ABI,逗号分隔（仅 build,Android）
-  --debug         显示详细日志（所有指令通用）
+  --device <id>   指定设备(仅 test)
+  --arch <abi>    指定 ABI,逗号分隔(仅 build,Android)
+  --debug         显示详细日志(所有指令通用)
 `,
 
   parseFlags = args => {

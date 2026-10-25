@@ -45,7 +45,8 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
     console.log(chalk.cyan(`\n[4/${total}] 复制用户项目`));
     const { moduleType, targetDir } = copyUserProject(userProjectDir, buildDir, config);
 
-    console.log(chalk.cyan(`\n[5/${total}] 安装依赖与编译优化`)), await installUserDeps(targetDir, userProjectDir, config, buildDir, isIos ? 'ios' : 'android');
+    console.log(chalk.cyan(`\n[5/${total}] 安装依赖与编译优化`)),
+      await installUserDeps(targetDir, userProjectDir, config, buildDir, isIos ? 'ios' : 'android');
     patchNodejsMobilePlugin(userProjectDir, config);
     patchWebViewSsl(userProjectDir, config), writeLocalProperties(buildDir, config);
 
@@ -54,7 +55,7 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 
     if (isIos) {
       console.log(chalk.cyan(`\n[7/${total}] pod install`)), podInstall(path.join(buildDir, 'ios'));
-      console.log(chalk.cyan(`\n[8/${total}] 生成 JS bundle + Hermes 字节码（由 Xcode Run Script 自动）`));
+      console.log(chalk.cyan(`\n[8/${total}] 生成 JS bundle + Hermes 字节码(由 Xcode Run Script 自动)`));
       const bundlePath = path.join(buildDir, 'ios', 'main.jsbundle');
       runSilent('npx', [
         'react-native', 'bundle',
@@ -68,12 +69,12 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
       console.log(chalk.cyan(`\n[9/${total}] 编译并安装到模拟器/设备`));
       const args = ['react-native', 'run-ios'];
       if (flags.device) args.push('--device', flags.device);
-      // FORCE_BUNDLING=1：即使 Debug+模拟器也把 main.jsbundle 打进 App
+      // FORCE_BUNDLING=1:即使 Debug+模拟器也把 main.jsbundle 打进 App
       const env = { ...process.env, FORCE_BUNDLING: '1', NODE_MOBILE_MODE: 'test' };
       run('npx', args, { cwd: buildDir, env, inherit: true });
       await markVerified(buildDir);
     } else {
-      console.log(chalk.cyan(`\n[7/${total}] 生成 JS bundle（离线可用）`));
+      console.log(chalk.cyan(`\n[7/${total}] 生成 JS bundle(离线可用)`));
       const assetsDir = path.join(buildDir, 'android', 'app', 'src', 'main', 'assets'),
         resDir = path.join(buildDir, 'android', 'app', 'src', 'main', 'res');
       ensureDir(assetsDir);
@@ -89,7 +90,7 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
       ], { cwd: buildDir });
       console.log(chalk.green('    ✓ bundle 已生成'));
 
-      console.log(chalk.cyan(`\n[8/${total}] 编译 Hermes 字节码（加速离线启动）`));
+      console.log(chalk.cyan(`\n[8/${total}] 编译 Hermes 字节码(加速离线启动)`));
       const hermesc = findHermesc(userProjectDir);
       if (hermesc) {
         const hbcPath = bundlePath + '.hbc';
@@ -97,7 +98,7 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
         fs.copyFileSync(hbcPath, bundlePath), fs.unlinkSync(hbcPath);
         console.log(chalk.green('    ✓ 已替换为 Hermes 字节码'));
       }
-      else console.warn(chalk.yellow('  ⚠️  未找到 hermesc,跳过字节码编译（离线启动会较慢）'));
+      else console.warn(chalk.yellow('  ⚠️  未找到 hermesc,跳过字节码编译(离线启动会较慢)'));
 
       const mergedAsset = path.join(buildDir, 'android', 'app', 'build', 'intermediates', 'assets', 'debug',
         'mergeDebugAssets', 'index.android.bundle');
@@ -131,9 +132,11 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
         let ready = false;
         for (let i = 0; i < 60; i++) {
           await new Promise(r => setTimeout(r, 500));
-          if (await metroReady()) { ready = true, console.log(chalk.green('    ✓ Metro 已就绪（后台常驻,支持热更新）')); break; }
+          if (await metroReady()) {
+              ready = true, console.log(chalk.green('    ✓ Metro 已就绪(后台常驻,支持热更新)')); break;
+          }
         }
-        if (!ready) console.log(chalk.yellow('  ⚠️  Metro 30 秒内未就绪,详见 .metro.log；app 将回落到本地 bundle'));
+        if (!ready) console.log(chalk.yellow('  ⚠️  Metro 30 秒内未就绪,详见 .metro.log;app 将回落到本地 bundle'));
       }
       console.log(chalk.cyan(`\n[10/${total}] 编译 Debug 包`));
       const gradlew = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
@@ -157,7 +160,8 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
       const devPrefix = flags.device ? ['-s', flags.device] : [];
       run(adb, [...devPrefix, 'install', '-r', apkPath], { quiet: true });
       console.log(chalk.green('    ✓ 已安装到设备'));
-      run(adb, [...devPrefix, 'shell', 'monkey', '-p', config.appId, '-c', 'android.intent.category.LAUNCHER', '1'], { quiet: true });
+      run(adb, [...devPrefix, 'shell', 'monkey', '-p', config.appId, '-c', 'android.intent.category.LAUNCHER', '1'],
+        { quiet: true });
       writeInstallState(buildDir, { appId: config.appId, variant: 'debug', installedAt: new Date().toISOString() });
       await markVerified(buildDir);
     }

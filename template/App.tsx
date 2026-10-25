@@ -4,9 +4,9 @@ import { WebView } from 'react-native-webview';
 import * as NodeMobile from '@flun/nodejs-mobile-react-native';
 import runtime from './mobileApp.runtime';
 
-// 背景色解析：支持以下三种配置
+// 背景色解析:支持以下三种配置
 //   '#ffffff' / 'white' 等字符串 → 固定色
-//   'system'                     → 跟随系统（内部用默认浅/深色）
+//   'system'                     → 跟随系统(内部用默认浅/深色)
 //   { light: '#fff', dark: '#000' } → 按系统主题切换
 const resolveBgColor = (bg: string | { light: string; dark: string }, theme: string | null | undefined): string => {
   if (typeof bg === 'object' && bg !== null)
@@ -58,7 +58,7 @@ const resolveBgColor = (bg: string | { light: string; dark: string }, theme: str
       return () => NodeMobile.channel.removeListener('message', listener);
     }, []);
 
-    // 失败：显示错误页（用户看提示,开发者点开看详情）
+    // 失败:显示错误页(用户看提示,开发者点开看详情)
     if (failedReason) {
       return (
         <View style={styles.errorContainer}>
@@ -77,7 +77,7 @@ const resolveBgColor = (bg: string | { light: string; dark: string }, theme: str
       );
     }
 
-    // 尚未就绪：loading
+    // 尚未就绪:loading
     if (!url) {
       if (!runtime.showLoading) return <View style={styles.fill} />;
       return (

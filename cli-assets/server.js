@@ -1,8 +1,8 @@
 // ============================================================
-// 这是 @flun/node-mobile-app 自动生成的默认入口脚本。
-// 请替换为你自己的 Node.js 启动脚本。
+// 这是 @flun/node-mobile-app 自动生成的默认入口脚本;
+// 请替换为你自己的 Node.js 启动脚本;
 //
-// 你可以：
+// 你可以:
 //   1. 直接修改这个文件
 //   2. 或用 mobileAppConfig.js 里的 serverPath 指向你自己的入口文件
 // ============================================================
@@ -17,7 +17,10 @@ const PORT = 3000,
   <title>Node Mobile App</title>
   <style>
   html,body{height:100%;margin:0;padding:0}
-  body{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;text-align:center;padding:24px;box-sizing:border-box}
+  body{display:flex;flex-direction:column;justify-content:center;align-items:center;
+    min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    color:#fff;text-align:center;padding:24px;box-sizing:border-box}
   h1{margin:0 0 16px;font-size:28px;font-weight:600;letter-spacing:.5px}
   p{margin:0;font-size:16px;opacity:.9;line-height:1.5}
   .hint{margin-top:32px;font-size:13px;opacity:.65}

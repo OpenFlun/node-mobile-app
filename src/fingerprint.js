@@ -63,7 +63,8 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
 
     let pluginVersion = null, cliVersion = null;
     const pluginPkg = path.join(pluginDir, 'package.json'), cliPkg = path.join(pkgRoot, 'package.json');
-    if (fs.existsSync(pluginPkg)) try { pluginVersion = JSON.parse(fs.readFileSync(pluginPkg, 'utf-8')).version; } catch { };
+    if (fs.existsSync(pluginPkg))
+        try { pluginVersion = JSON.parse(fs.readFileSync(pluginPkg, 'utf-8')).version; } catch { };
     if (fs.existsSync(cliPkg)) try { cliVersion = JSON.parse(fs.readFileSync(cliPkg, 'utf-8')).version; } catch { };
 
     const depsHash = hashUserDeps(userProjectDir), a = config.android || {},
@@ -108,7 +109,7 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
       if (templateChanged) reasons.push('模板文件');
       if (depsChanged) reasons.push('用户依赖');
       if (appInfoChanged) reasons.push('应用信息');
-      console.log(chalk.yellow('  ⚠️  检测到变化（' + reasons.join('、') + '）,清理 Gradle 缓存、CMake 缓存与依赖缓存'));
+      console.log(chalk.yellow('  ⚠️  检测到变化(' + reasons.join('、') + '),清理 Gradle 缓存、CMake 缓存与依赖缓存'));
       clearGradleCaches(buildDir, userProjectDir);
       removeDir(path.join(userProjectDir, 'node_modules', '@flun', 'nodejs-mobile-react-native', 'android', '.cxx'));
       clearDepsCaches(buildDir);
@@ -117,7 +118,7 @@ const FINGERPRINT_FILE = '.build-fingerprint.json',
       const reasons = [], targets = [];
       if (depsChanged) reasons.push('用户依赖'), targets.push('依赖缓存', 'Gradle 缓存');
       if (appInfoChanged) reasons.push('应用信息'), targets.push('Gradle 缓存');
-      console.log(chalk.yellow('  ⚠️  检测到变化（' + reasons.join('、') + '）,清理 ' + [...new Set(targets)].join('、')));
+      console.log(chalk.yellow('  ⚠️  检测到变化(' + reasons.join('、') + '),清理 ' + [...new Set(targets)].join('、')));
       clearGradleCaches(buildDir, userProjectDir);
       if (depsChanged) clearDepsCaches(buildDir);
     }

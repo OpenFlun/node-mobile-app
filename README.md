@@ -17,7 +17,9 @@
 - **增量构建**:文件指纹判断缓存,无变化时 10 秒级重跑
 - **跨平台**:Android(Windows / macOS / Linux)+ iOS(仅 macOS)
 - **离线可用**:`build` 打出的 APK / IPA 内置 JS,无需连电脑也能跑
-- **node_modules 优化(默认开启)**:构建时先交叉编译原生模块,再自动执行六阶段优化--先清空 postinstall 资源(保留 js 供合并),再合并 JS,清平台二进制,清开发文件,清中间产物,清冗余与空目录;编译源文件与 node-gyp 中间产物在编译完成后一并清理,仅保留 `.node`;大幅减少打包文件数与体积,加速启动,无需配置;
+- **node_modules 优化(默认开启)**:构建时先交叉编译原生模块,再自动执行六阶段优化--先清空 postinstall 资源(保留 js 供合并),
+  再合并 JS,清平台二进制,清开发文件,清中间产物,清冗余与空目录;编译源文件与 node-gyp 中间产物在编译完成后一并清理,仅保留 
+  `.node`;大幅减少打包文件数与体积,加速启动,无需配置;
 - **热更新开箱可用**:`test` 自动启动 Metro 并后台常驻,命令结束后仍可热更新;详见 [自动化机制](#自动化机制);
 - **签名切换自动处理**:设备已装包与待装包签名不一致时,`test` 自动卸载重装,避免 `INSTALL_FAILED_UPDATE_INCOMPATIBLE`;
 
@@ -56,7 +58,8 @@
 │   ├── fingerprint.js            # 缓存指纹(判断是否需要清理构建缓存)
 │   ├── generate.js               # 生成 main.js(桥接)+ mobileApp.runtime.ts(运行时配置)
 │   ├── install.js                # 依赖安装 + 原生模块交叉编译(前移至优化前) + 插件 abiFilters patch + WebView SSL patch
-│   ├── optimize-node-modules.js  # node_modules 优化(六阶段:清资源 / 合并 JS / 清平台二进制 / 清开发文件与编译源文件 / 清 node-gyp 中间产物 / 清冗余与空目录)
+│   ├── optimize-node-modules.js  # node_modules 优化(六阶段:清资源 / 合并 JS / 清平台二进制 / 清开发文件与编译源文件 / 清 
+node-gyp 中间产物 / 清冗余与空目录)
 │   ├── patcher.js                # 应用信息 / Android / iOS 配置 patch
 │   ├── platform-ios.js           # iOS 构建(pod install / xcodebuild archive / export)
 │   ├── utils.js                  # 通用工具(文件操作 / 进程调用 / adb / hermesc 定位)
@@ -89,7 +92,8 @@
 ```
 
 **关键约定**:
-- `template/` 是**只读模板**;CLI 每次 `test`/`build` 会把它复制到你的项目的 `node-mobile-app-build/`,你如手改模板内容会被覆盖
+- `template/` 是**只读模板**;CLI 每次 `test`/`build` 会把它复制到你的项目的 `node-mobile-app-build/`,
+  你如手改模板内容会被覆盖
 - 你的持久化的自定义项应写进 `mobileAppConfig.js`,或通过 `keepFiles` 保留特定模板文件
 - `template/.watchmanconfig` 会在 `copyTemplate` 时复制到 `node-mobile-app-build/.watchmanconfig`,供 Metro 的 watchman 使用
 
@@ -119,7 +123,8 @@
 
 ### 允许安装脚本执行
 
-本包在安装时可能触发某些依赖包的自动脚本(如 `postinstall` 等);如果你的 npm 全局配置或项目配置禁止了脚本执行(例如设置了 `ignore-scripts=true`),可能会导致安装不完整或运行时异常;
+本包在安装时可能触发某些依赖包的自动脚本(如 `postinstall` 等);如果你的 npm 全局配置或项目配置禁止了脚本执行(例如设置了 
+`ignore-scripts=true`),可能会导致安装不完整或运行时异常;
 
 推荐在项目根目录的 `package.json` 中添加 `allowScripts` 字段,显式放行本包及其依赖的脚本:
 
@@ -160,14 +165,18 @@ npx node-mobile-app build --release
 
 ## 命令说明
 
-| 命令                                  | 用途                                                                                               |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `npx node-mobile-app test`            | 编译并安装到设备(**需连 USB**);自动启动 Metro 并后台常驻,支持热更新;设备已装包签名不一致时自动卸载 |
-| `npx node-mobile-app test --ios`      | iOS 版(仅 macOS)                                                                                   |
-| `npx node-mobile-app build`           | 打 debug APK(**离线可用**)                                                                         |
-| `npx node-mobile-app build --release` | 打 release APK(默认用 debug keystore 签名,可安装;上架需配置 `android.signing`)                     |
-| `npx node-mobile-app build --ios`     | 打 IPA(仅 macOS)                                                                                   |
-| `npx node-mobile-app clean`           | 清理构建缓存                                                                                       |
+- `npx node-mobile-app test`
+  - 编译并安装到设备(**需连 USB**);自动启动 Metro 并后台常驻,支持热更新;设备已装包签名不一致时自动卸载
+- `npx node-mobile-app test --ios`
+  - iOS 版(仅 macOS)
+- `npx node-mobile-app build`
+  - 打 debug APK(**离线可用**)
+- `npx node-mobile-app build --release`
+  - 打 release APK(默认用 debug keystore 签名,可安装;上架需配置 `android.signing`)
+- `npx node-mobile-app build --ios`
+  - 打 IPA(仅 macOS)
+- `npx node-mobile-app clean`
+  - 清理构建缓存
 
 ### 常用选项
 
@@ -210,7 +219,9 @@ adb install -r "./out/myapp-1.0.0-release.apk"
 
 **说明**:
 - `-r` = 覆盖安装(保留应用数据)
-- **签名不同的包不能互相覆盖**:`build` 的 release 包用 `android.signing` 的 keystore 签名,`test` / `build` 的 debug 包用模板自带 debug keystore 签名;两者包名相同但签名不同,直接 `install -r` 会报 `INSTALL_FAILED_UPDATE_INCOMPATIBLE: signatures do not match`;需先执行 `adb uninstall <appId>` 再安装(会清除应用数据)
+- **签名不同的包不能互相覆盖**:`build` 的 release 包用 `android.signing` 的 keystore 签名,`test` / `build` 的 debug 
+  包用模板自带 debug keystore 签名;两者包名相同但签名不同,直接 `install -r` 会报 
+  `INSTALL_FAILED_UPDATE_INCOMPATIBLE: signatures do not match`;需先执行 `adb uninstall <appId>` 再安装(会清除应用数据)
 - `adb` 找不到?在 `mobileAppConfig.js` 里配 `android.adbPath`
 - `test` 命令已自动处理签名冲突并安装,无需手动
 
@@ -218,11 +229,18 @@ adb install -r "./out/myapp-1.0.0-release.apk"
 
 ## 自动化机制
 
-- **快照双哈希**:`.deps-snapshot.json` 记录 `optimizeHash`(`optimize-node-modules.js` 内容哈希)与 `installerHash`(`install.js` 内容哈希);任一变化即触发重装、重编、重优化,避免流程代码更新后仍复用旧缓存;
-- **bundle 变化失效 Gradle 缓存**:`test` 生成 JS bundle 后,与 `android/app/build/intermediates/assets/debug/mergeDebugAssets/` 中的合并结果比对 SHA256;不一致时删除合并目录,强制 Gradle 重新合并;一致时保持 UP-TO-DATE;
-- **编译前执行 `patch-package.js`**:把原生模块 `package.json` 中的 `node-gyp-build` 替换为 `node-gyp-build-mobile`,使编译走 `@flun/nodejs-mobile-gyp` 而非 npm 自带的 `node-gyp`;
-- **Metro 生命周期**:`test` 执行前检测 `localhost:8081/status`;未运行则以 detached 方式启动 `react-native start`(日志写入 `node-mobile-app-build/.metro.log`),就绪后继续;`run-android` 加 `--no-packager`,命令结束后 Metro 保持运行;30 秒未就绪打印警告并回落到 APK 内置 bundle;
-- **输出分级**:步骤标题 0 空格,动作与状态 2 空格,结果与完成 4 空格,子项详情 8 空格;优化阶段作为步骤子项,阶段标题 4 空格、阶段结果 6 空格;
+- **快照双哈希**:`.deps-snapshot.json` 记录 `optimizeHash`(`optimize-node-modules.js` 内容哈希)与 
+  `installerHash`(`install.js` 内容哈希);任一变化即触发重装、重编、重优化,避免流程代码更新后仍复用旧缓存;
+- **bundle 变化失效 Gradle 缓存**:`test` 生成 JS bundle 后,与 
+  `android/app/build/intermediates/assets/debug/mergeDebugAssets/` 中的合并结果比对 SHA256;不一致时删除合并目录,强制 
+  Gradle 重新合并;一致时保持 UP-TO-DATE;
+- **编译前执行 `patch-package.js`**:把原生模块 `package.json` 中的 `node-gyp-build` 替换为 `node-gyp-build-mobile`,
+  使编译走 `@flun/nodejs-mobile-gyp` 而非 npm 自带的 `node-gyp`;
+- **Metro 生命周期**:`test` 执行前检测 `localhost:8081/status`;未运行则以 detached 方式启动 `react-native start`(日志写入 
+  `node-mobile-app-build/.metro.log`),就绪后继续;`run-android` 加 `--no-packager`,命令结束后 Metro 保持运行;30 
+  秒未就绪打印警告并回落到 APK 内置 bundle;
+- **输出分级**:步骤标题 0 空格,动作与状态 2 空格,结果与完成 4 空格,子项详情 8 空格;优化阶段作为步骤子项,阶段标题 4 空格、
+  阶段结果 6 空格;
 - **精简与详细双模式**:默认只输出关键行与结果,`--debug` 或 `OPTIMIZE_DEBUG=1` 时全量输出(含 Gradle 与 Metro 完整日志);
 
 ## 配置文件 `mobileAppConfig.js`
@@ -231,52 +249,109 @@ adb install -r "./out/myapp-1.0.0-release.apk"
 
 ### 必填
 
-| 字段         | 类型     | 说明                                    |
-| ------------ | -------- | --------------------------------------- |
-| `serverPath` | `string` | Node 启动脚本路径(默认 `'./server.js'`) |
-
-### 应用信息
-
-| 字段          | 类型             | 说明                                                                     |
-| ------------- | ---------------- | ------------------------------------------------------------------------ |
-| `appName`     | `string \| null` | 应用显示名称(默认从 `package.json` 的 `name` 读)                         |
-| `outputDir`   | `string \| null` | APK / IPA 输出目录(默认 `./out`)                                         |
-| `appId`       | `string`         | 应用唯一标识,反向域名格式(Android `applicationId` / iOS Bundle ID)       |
-| `versionCode` | `int`            | 内部版本号(Android `versionCode` / iOS `CFBundleVersion`)                |
-| `versionName` | `string`         | 你的可见版本名(Android `versionName` / iOS `CFBundleShortVersionString`) |
-
-### WebView
-
-| 字段                  | 类型      | 默认                | 说明                                                                                      |
-| --------------------- | --------- | ------------------- | ----------------------------------------------------------------------------------------- |
-| `showLoading`         | `boolean` | `true`              | 是否显示加载指示器                                                                        |
-| `loadingText`         | `string`  | `'正在启动服务...'` | 加载提示文字                                                                              |
-| `enableJavaScript`    | `boolean` | `true`              | 是否启用 JavaScript                                                                       |
-| `enableDomStorage`    | `boolean` | `true`              | 是否启用 DOM Storage                                                                      |
-| `allowFileAccess`     | `boolean` | `true`              | 是否允许访问本地文件                                                                      |
-| `mixedContentMode`    | `string`  | `'always'`          | 混合内容模式:`never` / `always` / `compatibility`                                         |
-| `backgroundColor`     | 见下      | `'#ffffff'`         | WebView 背景色;支持:固定色 `'#ffffff'` / 跟随系统 `'system'` / 深浅两值 `{ light, dark }` |
-| `allowSelfSignedCert` | `boolean` | `false`             | 见下文"HTTPS 自签证书"                                                                    |
+- `appName`
+  - 类型:`string \| null`
+  - 默认:`null`
+  - 说明:应用显示名称(默认从 `package.json` 的 `name` 读)
+- `outputDir`
+  - 类型:`string \| null`
+  - 默认:`null`
+  - 说明:APK / IPA 输出目录(默认 `./out`)
+- `showLoading`
+  - 类型:`boolean`
+  - 默认:`true`
+  - 说明:是否显示加载指示器
+- `loadingText`
+  - 类型:`string`
+  - 默认:`'正在启动服务...'`
+  - 说明:加载提示文字
+- `enableJavaScript`
+  - 类型:`boolean`
+  - 默认:`true`
+  - 说明:是否启用 JavaScript
+- `enableDomStorage`
+  - 类型:`boolean`
+  - 默认:`true`
+  - 说明:是否启用 DOM Storage
+- `allowFileAccess`
+  - 类型:`boolean`
+  - 默认:`true`
+  - 说明:是否允许访问本地文件
+- `mixedContentMode`
+  - 类型:`string`
+  - 默认:`'always'`
+  - 说明:混合内容模式:`never` / `always` / `compatibility`
+- `backgroundColor`
+  - 类型:见下
+  - 默认:`'#ffffff'`
+  - 说明:WebView 背景色;支持:固定色 `'#ffffff'` / 跟随系统 `'system'` / 深浅两值 `{ light, dark }`
+- `allowSelfSignedCert`
+  - 类型:`boolean`
+  - 默认:`false`
+  - 说明:见下文"HTTPS 自签证书"
 
 ### Android
 
-| 字段                    | 类型             | 默认                 | 说明                                                                                                 |
-| ----------------------- | ---------------- | -------------------- | ---------------------------------------------------------------------------------------------------- |
-| `sdkPath`               | `string \| null` | `null`               | Android SDK 路径(默认自动查找)                                                                       |
-| `adbPath`               | `string \| null` | `null`               | adb 路径(默认自动查找)                                                                               |
-| `minSdkVersion`         | `int`            | `29`                 | 最低 SDK(29=Android 10.0)                                                                            |
-| `targetSdkVersion`      | `int`            | `36`                 | 目标 SDK                                                                                             |
-| `compileSdkVersion`     | `int`            | `37`                 | 编译 SDK                                                                                             |
-| `buildToolsVersion`     | `string`         | `'37.0.0'`           | 构建工具版本                                                                                         |
-| `abiFilters`            | `string[]`       | `['arm64-v8a']`      | 打包架构(真机 `arm64-v8a`,模拟器加 `x86_64`)                                                         |
-| `icon`                  | `string`         | `'./build/icon.png'` | 应用图标(建议 512×512 PNG)                                                                           |
-| `usesCleartextTraffic`  | `boolean`        | `true`               | 是否允许明文 HTTP                                                                                    |
-| `permissions`           | `string[]`       | `[]`                 | 额外权限(如 `'android.permission.CAMERA'`)                                                           |
-| `signing`               | `object`         | -                    | 自定义签名配置.**不填则用模板自带的 debug keystore 签名**(可安装测试,不可上架);填则以下 4 项均为必填 |
-| `signing.keystore`      | `string`         | -                    | keystore 路径(相对你的项目根)                                                                        |
-| `signing.storePassword` | `string`         | -                    | keystore 密码                                                                                        |
-| `signing.keyAlias`      | `string`         | -                    | 密钥别名                                                                                             |
-| `signing.keyPassword`   | `string`         | -                    | 密钥密码(通常与 `storePassword` 相同)                                                                |
+- `sdkPath`
+  - 类型:`string \| null`
+  - 默认:`null`
+  - 说明:Android SDK 路径(默认自动查找)
+- `adbPath`
+  - 类型:`string \| null`
+  - 默认:`null`
+  - 说明:adb 路径(默认自动查找)
+- `minSdkVersion`
+  - 类型:`int`
+  - 默认:`29`
+  - 说明:最低 SDK(29=Android 10.0)
+- `targetSdkVersion`
+  - 类型:`int`
+  - 默认:`36`
+  - 说明:目标 SDK
+- `compileSdkVersion`
+  - 类型:`int`
+  - 默认:`37`
+  - 说明:编译 SDK
+- `buildToolsVersion`
+  - 类型:`string`
+  - 默认:`'37.0.0'`
+  - 说明:构建工具版本
+- `abiFilters`
+  - 类型:`string[]`
+  - 默认:`['arm64-v8a']`
+  - 说明:打包架构(真机 `arm64-v8a`,模拟器加 `x86_64`)
+- `icon`
+  - 类型:`string`
+  - 默认:`'./build/icon.png'`
+  - 说明:应用图标(建议 512×512 PNG)
+- `usesCleartextTraffic`
+  - 类型:`boolean`
+  - 默认:`true`
+  - 说明:是否允许明文 HTTP
+- `permissions`
+  - 类型:`string[]`
+  - 默认:`[]`
+  - 说明:额外权限(如 `'android.permission.CAMERA'`)
+- `signing`
+  - 类型:`object`
+  - 默认:-
+  - 说明:自定义签名配置.**不填则用模板自带的 debug keystore 签名**(可安装测试,不可上架);填则以下 4 项均为必填
+- `signing.keystore`
+  - 类型:`string`
+  - 默认:-
+  - 说明:keystore 路径(相对你的项目根)
+- `signing.storePassword`
+  - 类型:`string`
+  - 默认:-
+  - 说明:keystore 密码
+- `signing.keyAlias`
+  - 类型:`string`
+  - 默认:-
+  - 说明:密钥别名
+- `signing.keyPassword`
+  - 类型:`string`
+  - 默认:-
+  - 说明:密钥密码(通常与 `storePassword` 相同)
 
 #### 生成自签名 keystore
 
@@ -316,7 +391,8 @@ signing: {
 },
 ```
 
-> **提示**:`storepass` / `keypass` 可填相同值,对应配置里 `storePassword` / `keyPassword` 也填相同值.四项缺一不可,缺项时构建前会报错.
+> **提示**:`storepass` / `keypass` 可填相同值,对应配置里 `storePassword` / `keyPassword` 也填相同值.四项缺一不可,
+  缺项时构建前会报错.
 
 ### iOS
 
@@ -362,13 +438,18 @@ signing: {
 **编译与优化顺序**:先交叉编译原生模块(见 `install.js`),再执行以下六阶段优化:
 
 1. **清空资源**:扫描各包 `postinstall` 引用的目录/文件,保留目录结构,清空内容;js 文件一律保留,留待合并阶段处理;
-2. **合并 JS**:按包入口 bundle,多个 JS 文件合并为单文件(`bundled/` 目录);合并后同步删除 `package.json` 的 `scripts` 字段(运行时无安装期,且 Gradle `npm rebuild` 会触发脚本导致失败);
-3. **清平台二进制**:按目标平台 + `abiFilters` 判定;`prebuilds/<platform>-<arch>` 按目录整体处理--Android 只保留 `android`,`linux` / `darwin` / `win32` 删除;iOS 只保留 `darwin`;其余二进制逐文件按文件头判定;
-4. **清开发文件与编译源文件**:删除 `.md` / `.map` / `.d.ts` / `.h` / `.c` / `.cc` / `.cpp` / `.cxx` 等非运行文件;原生模块已在优化前完成编译,编译源文件无需保留;
-5. **清 node-gyp 中间产物**:删除 `build/Release/obj.target/` 下的中间副本,以及 `.o` / `.d` / `.mk` / `.stamp` / `Makefile` 等编译中间文件;
+2. **合并 JS**:按包入口 bundle,多个 JS 文件合并为单文件(`bundled/` 目录);合并后同步删除 `package.json` 的 `scripts` 
+   字段(运行时无安装期,且 Gradle `npm rebuild` 会触发脚本导致失败);
+3. **清平台二进制**:按目标平台 + `abiFilters` 判定;`prebuilds/<platform>-<arch>` 按目录整体处理--Android 只保留 `android`,
+   `linux` / `darwin` / `win32` 删除;iOS 只保留 `darwin`;其余二进制逐文件按文件头判定;
+4. **清开发文件与编译源文件**:删除 `.md` / `.map` / `.d.ts` / `.h` / `.c` / `.cc` / `.cpp` / `.cxx` 等非运行文件;
+   原生模块已在优化前完成编译,编译源文件无需保留;
+5. **清 node-gyp 中间产物**:删除 `build/Release/obj.target/` 下的中间副本,以及 `.o` / `.d` / `.mk` / `.stamp` / `Makefile` 
+   等编译中间文件;
 6. **清不参与运行的文件和空目录**.
 
-**缓存**:快照记录在 `node-mobile-app-build/.deps-snapshot.json`,构建时自动判断"重装并优化 / 仅优化 / 跳过";改动模板或依赖会自动触发重编.
+**缓存**:快照记录在 `node-mobile-app-build/.deps-snapshot.json`,构建时自动判断"重装并优化 / 仅优化 / 跳过";
+改动模板或依赖会自动触发重编.
 
 **异常排查**:
 
@@ -378,7 +459,8 @@ signing: {
 
 ## 服务地址说明
 
-CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Server.prototype.listen`,从 `server.address()` 取真实端口,从 `Server` 类型判断 `http` / `https`;
+CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Server.prototype.listen`,从 `server.address()` 取真实端口,从 
+`Server` 类型判断 `http` / `https`;
 
 因此 `mobileAppConfig.js` **不需要**配置端口/协议;动态端口(`listen(0)`)会拿到系统分配的真实端口;
 
@@ -420,7 +502,9 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Ser
 | `test` 离线  | ✓(内置 bundle)                                            | ✓(需 `FORCE_BUNDLING=1`)                 |
 | 图标尺寸     | 5 个密度(48~192)                                          | 9 个尺寸(40~1024)                        |
 
-**iOS 运行时版本**:iOS 附件的实际运行时版本随适配进度变化,**当前对应 v18.20.4**;如需更高版本,可克隆 [nodejs-mobile 仓库](https://github.com/OpenFlun/nodejs-mobile) 自行编译 `NodeMobile.xcframework`,流程与 Android 自编译 `libnode.so` 类似(见 `自定义libnode指南.md`);
+**iOS 运行时版本**:iOS 附件的实际运行时版本随适配进度变化,**当前对应 v18.20.4**;如需更高版本,可克隆 [nodejs-mobile 
+仓库](https://github.com/OpenFlun/nodejs-mobile) 自行编译 `NodeMobile.xcframework`,流程与 Android 自编译 `libnode.so` 
+类似(见 `自定义libnode指南.md`);
 
 ---
 
@@ -456,7 +540,9 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Ser
 
 ### Q:`test` 拔掉 USB 后 App 加载慢?
 
-`test` 打的是 debug 版,启动时优先连 Metro;CLI 会在 `[9/11]` 自动启动 Metro 并保持后台常驻,但设备通过 `adb reverse` 访问 `localhost:8081`,**拔掉 USB 后端口转发失效**,设备连不上 Metro,debug 包等待超时后才回落到 APK 内置的 bundle;这个"等超时"是 RN debug 版的固有行为;
+`test` 打的是 debug 版,启动时优先连 Metro;CLI 会在 `[9/11]` 自动启动 Metro 并保持后台常驻,但设备通过 `adb reverse` 访问 
+`localhost:8081`,**拔掉 USB 后端口转发失效**,设备连不上 Metro,debug 包等待超时后才回落到 APK 内置的 bundle;这个"等超时"是 
+RN debug 版的固有行为;
 
 拔线后的启动速度(从快到慢):
 
@@ -464,11 +550,13 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Ser
 2. **`npx node-mobile-app build`** 打包后安装到手机--次之(debug 版,会先尝试连 Metro 再回退)
 3. **`npx node-mobile-app test`** 后手动打开应用--最慢(同上,且 `test` 面向"连 USB 热更新"场景)
 
-若需要**热更新**,保持 USB 连接(维持 `adb reverse` 的端口转发);不需要热更新时,用 `build --release` 打包可避免等待 Metro 超时.
+若需要**热更新**,保持 USB 连接(维持 `adb reverse` 的端口转发);不需要热更新时,用 `build --release` 打包可避免等待 Metro 
+超时.
 
 ### Q:`test` 装到手机后拔 USB 就崩?
 
-前提是 APK 里有内置 bundle;`test` 每次都会先 `react-native bundle` 打进 APK;**如果崩,检查 CLI 输出里 `[7/11] 生成 JS bundle（离线可用）` 是否成功**;
+前提是 APK 里有内置 bundle;`test` 每次都会先 `react-native bundle` 打进 
+APK;**如果崩,检查 CLI 输出里 `[7/11] 生成 JS bundle(离线可用)` 是否成功**;
 
 ### Q:Node 进程启动失败怎么排查?
 
@@ -484,7 +572,8 @@ adb logcat | grep -E "NODEJS-MOBILE|ReactNativeJS"
 ```
 
 ### Q:`npm install` 时提示 `install-scripts not yet covered by allowScripts`?
-这是 npm 的提醒,表示某些依赖带有 `postinstall` / `install` 脚本,尚未在 `allowScripts` 里显式放行;`@flun/node-mobile-app` 及其依赖(`@flun/nodejs-mobile-react-native`、`esbuild` 等)需要执行这些脚本才能完整安装;
+这是 npm 的提醒,表示某些依赖带有 `postinstall` / `install` 脚本,尚未在 `allowScripts` 里显式放行;`@flun/node-mobile-app` 
+及其依赖(`@flun/nodejs-mobile-react-native`、`esbuild` 等)需要执行这些脚本才能完整安装;
 
 放行方式见 [允许安装脚本执行](#允许安装脚本执行):在项目根 `package.json` 中添加 `allowScripts` 字段,逐项设为 `true`;
 
@@ -492,7 +581,8 @@ adb logcat | grep -E "NODEJS-MOBILE|ReactNativeJS"
 
 ### Q:Android 构建卡在拉取依赖(`react-android` / `hermes-android` 等)?
 
-Android 模板的 `settings.gradle` 与 `build.gradle` 已在 `google()` / `mavenCentral()` 之前插入阿里云镜像,国内网络优先走镜像;海外网络镜像不命中会自动回退官方源,不影响功能.
+Android 模板的 `settings.gradle` 与 `build.gradle` 已在 `google()` / `mavenCentral()` 之前插入阿里云镜像,
+国内网络优先走镜像;海外网络镜像不命中会自动回退官方源,不影响功能.
 
 若仍卡住:
 
@@ -509,7 +599,8 @@ Express 5 的路由语法与 4 不同(如 `app.get('*')` 要改成 `app.get('/{*
 
 ### Q:`libnode.so` 和 `NodeMobile.xcframework` 是怎么来的?
 
-从 `@flun/nodejs-mobile-react-native` 1.0.1 起,两套预编译二进制**不在 npm 包里**,改为 postinstall 阶段自动从 Gitee / GitHub Release 下载:
+从 `@flun/nodejs-mobile-react-native` 1.0.1 起,两套预编译二进制**不在 npm 包里**,改为 postinstall 阶段自动从 Gitee / 
+GitHub Release 下载:
 
 | 资源                           | 目标位置                                                                    |
 | ------------------------------ | --------------------------------------------------------------------------- |
@@ -537,13 +628,15 @@ NODE_MOBILE_PREBUILT_IOS_SKIP=1          # 只跳过 iOS
 2. 如果 `mobileAppConfig.js` 的 `android.abiFilters` 与 libnode 支持的架构不一致,同步调整
 3. 跑 `npx node-mobile-app build` 或 `npx node-mobile-app test`
 
-**CLI 会自动处理缓存**:指纹机制检测到 `libnode.so` 或 `abiFilters` 变化,自动清理 `.cxx` / `android/build` / `app/build`,全量重编;**你无需手动清任何缓存**;
+**CLI 会自动处理缓存**:指纹机制检测到 `libnode.so` 或 `abiFilters` 变化,自动清理 `.cxx` / `android/build` / `app/build`,
+全量重编;**你无需手动清任何缓存**;
 
 详细流程见 `自定义libnode指南.md`;
 
 ### Q:iOS 提示 `fallbackSourceURL does not override`?
 
-RN 0.87 的 API 若变动,`AppDelegate.swift` 里的 fallback 可能不生效--不影响"连 Mac + Metro"正常开发,只是拔 Mac 后无法 fallback 到内置 bundle;届时反馈,我们更新适配;
+RN 0.87 的 API 若变动,`AppDelegate.swift` 里的 fallback 可能不生效--不影响"连 Mac + Metro"正常开发,只是拔 Mac 后无法 
+fallback 到内置 bundle;届时反馈,我们更新适配;
 
 ---
 

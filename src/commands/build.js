@@ -21,7 +21,9 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
   runBuild = async (flags) => {
     const userProjectDir = process.cwd(), release = !!flags.release, isIos = !!flags.ios, total = isIos ? 8 : 7;
 
-    console.log(chalk.cyan(`\n=== node-mobile-app build (${isIos ? 'iOS' : 'Android'}, ${release ? 'release' : 'debug'}) ===\n`));
+    console.log(chalk.cyan(
+      `\n=== node-mobile-app build (${isIos ? 'iOS' : 'Android'}, ${release ? 'release' : 'debug'}) ===\n`
+    ));
     console.log(chalk.gray('用户项目: ' + userProjectDir));
     if (isIos) ensureMac(), checkIosTools();
     console.log(chalk.cyan(`\n[1/${total}] 检查用户配置与入口文件`)), ensureUserConfig(userProjectDir, PKG_ROOT);
@@ -59,10 +61,12 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 
     if (isIos) {
       console.log(chalk.cyan(`\n[7/${total}] pod install`)), podInstall(path.join(buildDir, 'ios'));
-      console.log(chalk.cyan(`\n[8/${total}] xcodebuild archive + export`)), xcodebuildArchive(buildDir, config, release, userProjectDir);
+      console.log(chalk.cyan(`\n[8/${total}] xcodebuild archive + export`)),
+        xcodebuildArchive(buildDir, config, release, userProjectDir);
 
       const ipaPath = xcodebuildExport(buildDir, config, release, outDir, userProjectDir),
-        dstName = `${safeName}-${config.versionName}-${release ? 'release' : 'debug'}.ipa`, dst = path.join(outDir, dstName);
+        dstName = `${safeName}-${config.versionName}-${release ? 'release' : 'debug'}.ipa`,
+        dst = path.join(outDir, dstName);
       fs.copyFileSync(ipaPath, dst), console.log(chalk.green('\n✅ 打包完成'));
 
       const mb = (fs.statSync(dst).size / 1024 / 1024).toFixed(1);
@@ -100,7 +104,8 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
       if (apks.length === 0) console.log(chalk.yellow('  ⚠️  未找到 APK'));
 
       for (const f of apks) {
-        const src = path.join(apkDir, f), dstName = `${safeName}-${config.versionName}-${release ? 'release' : 'debug'}.apk`,
+        const src = path.join(apkDir, f),
+          dstName = `${safeName}-${config.versionName}-${release ? 'release' : 'debug'}.apk`,
           dst = path.join(outDir, dstName);
 
         fs.copyFileSync(src, dst);

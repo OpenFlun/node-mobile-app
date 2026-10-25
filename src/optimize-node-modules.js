@@ -400,7 +400,8 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
                     if (cnt > 0) cleared += cnt, pkgItems.push(`${item}(${cnt})`);
                 }
             }
-            if (process.env.OPTIMIZE_DEBUG && pkgItems.length > 0) console.log(chalk.gray(`  ✓ ${pkgRel}: ${pkgItems.join(', ')}`));
+            if (process.env.OPTIMIZE_DEBUG && pkgItems.length > 0)
+              console.log(chalk.gray(`  ✓ ${pkgRel}: ${pkgItems.join(', ')}`));
         }
         return cleared;
     },
@@ -465,17 +466,20 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
             },
             delFile = p => {
                 try {
-                    fs.statSync(p).isDirectory() ? fs.rmSync(p, { recursive: true, force: true }) : fs.unlinkSync(p), removed++;
+                    fs.statSync(p).isDirectory() ? fs.rmSync(p, { recursive: true, force: true }) 
+                        : fs.unlinkSync(p), removed++;
                 } catch { }
             },
             processDir = d => {
                 let entries;
                 try { entries = fs.readdirSync(d, { withFileTypes: true }); } catch { return; }
                 for (const e of entries) {
-                    const full = path.join(d, e.name), expectedPrebuilds = targetPlatform === 'ios' ? ['darwin'] : ['android'],
+                    const full = path.join(d, e.name),
+                        expectedPrebuilds = targetPlatform === 'ios' ? ['darwin'] : ['android'],
                         prebuildMatch = full.match(/[\\/]prebuilds[\\/](linux|darwin|win32|android)-/i);
 
-                    if (prebuildMatch && !expectedPrebuilds.includes(prebuildMatch[1].toLowerCase())) { delFile(full); continue; }
+                    if (prebuildMatch && !expectedPrebuilds.includes(prebuildMatch[1].toLowerCase()))
+                      { delFile(full); continue; }
                     if (e.isDirectory()) { processDir(full); continue; }
                     if (JS_RE.test(e.name)) continue;
                     let plat = suffixPlat(e.name), arch = null;
@@ -532,7 +536,8 @@ const require = createRequire(import.meta.url), subpath = (...parts) => './' + p
     },
     pruneIntermediates = async nmDir => {
         let deleted = 0;
-        const MID_RE = /\.(o|d|mk|stamp|Makefile|iobj|ipdb|pdb|exp|lib|obj|vcxproj|tlog|recipe|lastbuildstate|nativecodeanalysis\.xml)$/i,
+        const MID_RE =
+        /\.(o|d|mk|stamp|Makefile|iobj|ipdb|pdb|exp|lib|obj|vcxproj|tlog|recipe|lastbuildstate|nativecodeanalysis\.xml)$/i,
             walk = d => {
                 for (const f of fs.readdirSync(d, { withFileTypes: true })) {
                     const full = path.join(d, f.name);

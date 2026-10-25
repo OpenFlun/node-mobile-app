@@ -5,20 +5,20 @@
  * 所有路径相对于用户项目根目录
  *
  * ===== 常用命令 =====
- *   npx node-mobile-app test            编译并安装到设备（需连 USB,走 Metro 热更新）
- *   npx node-mobile-app test --ios      iOS 版（仅 macOS）
- *   npx node-mobile-app build           打 debug APK（离线可用）
- *   npx node-mobile-app build --release 打 release APK（默认 debug keystore 签名,可安装；上架需配 android.signing）
- *   npx node-mobile-app build --ios     打 IPA（仅 macOS）
+ *   npx node-mobile-app test            编译并安装到设备(需连 USB,走 Metro 热更新)
+ *   npx node-mobile-app test --ios      iOS 版(仅 macOS)
+ *   npx node-mobile-app build           打 debug APK(离线可用)
+ *   npx node-mobile-app build --release 打 release APK(默认 debug keystore 签名,可安装;上架需配 android.signing)
+ *   npx node-mobile-app build --ios     打 IPA(仅 macOS)
  *   npx node-mobile-app clean           清理构建缓存
  *
- *   任意命令加 --debug 可显示详细日志（优化各阶段明细、各命令完整输出）
+ *   任意命令加 --debug 可显示详细日志(优化各阶段明细、各命令完整输出)
  *
  * ===== 服务地址说明 =====
- *   CLI 会自动识别 server.js 实际监听的协议和端口（拦截 listen 调用）,
+ *   CLI 会自动识别 server.js 实际监听的协议和端口(拦截 listen 调用),
  *   App 使用该地址加载页面,无需在此配置;
  *   若 5 秒内未能识别,App 显示启动失败并可在页面展开详情查看原因;
- *   动态端口（listen(0)）会自动获取系统分配的真实端口;
+ *   动态端口(listen(0))会自动获取系统分配的真实端口;
  */
 export default {
   // ===== 必填 =====
@@ -39,16 +39,16 @@ export default {
     enableDomStorage: true,           // 是否启用 DOM Storage(localStorage 等)
     allowFileAccess: true,            // 是否允许访问本地文件
     mixedContentMode: 'always',       // 混合内容模式:never / always / compatibility
-    // WebView 背景色,支持三种写法：
+    // WebView 背景色,支持三种写法:
     //   '#ffffff' / 'white'              固定色
-    //   'system'                         跟随系统（内部用默认浅/深色）
+    //   'system'                         跟随系统(内部用默认浅/深色)
     //   { light: '#fff', dark: '#1a1a1a' }  按系统主题切换
     backgroundColor: '#ffffff',
-    // 仅影响 HTTPS 场景下 App 是否加载自签证书的页面：
-    //   - 用 HTTP：与本开关无关
-    //   - 用 HTTPS + 真证书(如 Let's Encrypt)：与本开关无关
-    //   - 用 HTTPS + 自签证书 + 已装进设备信任库：与本开关无关
-    //   - 用 HTTPS + 自签证书 + 未装设备(本地测试最常见)：必须设为 true
+    // 仅影响 HTTPS 场景下 App 是否加载自签证书的页面:
+    //   - 用 HTTP:与本开关无关
+    //   - 用 HTTPS + 真证书(如 Let's Encrypt):与本开关无关
+    //   - 用 HTTPS + 自签证书 + 已装进设备信任库:与本开关无关
+    //   - 用 HTTPS + 自签证书 + 未装设备(本地测试最常见):必须设为 true
     // ⚠️ 开启后仅对 127.0.0.1 / localhost 放行不受信任的 HTTPS 证书,其他域名仍严格校验
     //    用于本地自签证书测试,生产环境建议关闭
     allowSelfSignedCert: false,
@@ -71,24 +71,24 @@ export default {
       // 'android.permission.CAMERA',
       // 'android.permission.READ_EXTERNAL_STORAGE',
     ],
-    // 签名配置（可选）
+    // 签名配置(可选)
     //
-    // 不配置也能打 release：模板默认用 debug keystore 签名（可安装、可本地测试,不可上架）;
-    // 需要上架时再配置下面任一种：
+    // 不配置也能打 release:模板默认用 debug keystore 签名(可安装、可本地测试,不可上架);
+    // 需要上架时再配置下面任一种:
     //
-    // 方式一：Android SDK 自带 debug keystore（本地测试常用）
+    // 方式一:Android SDK 自带 debug keystore(本地测试常用)
     //   keystore:       %USERPROFILE%\.android\debug.keystore   (Windows)
     //                   ~/.android/debug.keystore                 (macOS/Linux)
     //   storePassword:  'android'
     //   keyAlias:       'androiddebugkey'
     //   keyPassword:    'android'
     //
-    // 取消下方整块注释即视为「启用签名」,此时 4 项均为必填（缺项会在构建前报错）
+    // 取消下方整块注释即视为"启用签名",此时 4 项均为必填(缺项会在构建前报错)
     signing: {
-      // keystore:      './build/release.keystore', // 必填：keystore 路径（相对用户项目根）
-      // storePassword: '',                         // 必填：keystore 密码
-      // keyAlias:      '',                         // 必填：密钥别名
-      // keyPassword:   '',                         // 必填：密钥密码（与 storePassword 相同可填同值）
+      // keystore:      './build/release.keystore', // 必填:keystore 路径(相对用户项目根)
+      // storePassword: '',                         // 必填:keystore 密码
+      // keyAlias:      '',                         // 必填:密钥别名
+      // keyPassword:   '',                         // 必填:密钥密码(与 storePassword 相同可填同值)
     },
   },
 
@@ -97,10 +97,10 @@ export default {
   ios: {
     deploymentTarget: '15.1',         // 最低 iOS 版本(RN 0.87 要求 15.1+)
     icon: './build/icon.png',         // 应用图标(建议 1024x1024 PNG)
-    // 签名配置（仅 macOS,发布时必填）：
+    // 签名配置(仅 macOS,发布时必填):
     //   teamId              Apple Developer Team ID
-    //   provisioningProfile 描述文件路径（写入 exportOptions.plist）
-    //   certificate         P12 证书路径（导入临时 keychain 供 xcodebuild 签名用）
+    //   provisioningProfile 描述文件路径(写入 exportOptions.plist)
+    //   certificate         P12 证书路径(导入临时 keychain 供 xcodebuild 签名用)
     //   certificatePassword P12 密码
     signing: {
       // teamId: '',
@@ -120,14 +120,14 @@ export default {
   // 构建时合并 JS + 清空已复制到项目根的资源 + 清平台二进制 + 清开发文件,加速启动
   // 默认开启;若构建或运行异常,可按下述方式关闭或排除问题包
   optimize: {
-    enabled: true,                     // 是否启用（默认 true）
-    // exclude: ['包名'],              // 排除优化时异常或不想优化的包（默认空）
+    enabled: true,                     // 是否启用(默认 true)
+    // exclude: ['包名'],              // 排除优化时异常或不想优化的包(默认空)
   },
 
   // ===== 扩展点 =====
-  // 不重置的模板文件（路径相对于 node-mobile-app-build/,如 'android/app/src/main/AndroidManifest.xml'）
+  // 不重置的模板文件(路径相对于 node-mobile-app-build/,如 'android/app/src/main/AndroidManifest.xml')
   keepFiles: [],
-  // 额外 RN 原生依赖包名数组（用于 autolink 识别,含原生模块的包必须在此声明）
+  // 额外 RN 原生依赖包名数组(用于 autolink 识别,含原生模块的包必须在此声明)
   // 安装命令用 --save-dev,这些是开发依赖,不会进移动端 Node 环境
   // 示例: npm install --save-dev react-native-camera
   //       extraRnDependencies: ['react-native-camera']

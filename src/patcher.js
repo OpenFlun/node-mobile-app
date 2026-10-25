@@ -3,12 +3,12 @@ import fs from 'fs';
 import { writeIfChanged } from './utils.js';
 import chalk from 'chalk';
 
-// 把字符串中所有非 ASCII 字符转成 \uXXXX（Java Properties 规范）
+// 把字符串中所有非 ASCII 字符转成 \uXXXX(Java Properties 规范)
 // gradle.properties 按 ISO-8859-1 读取,无法改为 UTF-8
 const escapeProps = s =>
   String(s).replace(/[^\x00-\x7F]/g, ch => '\\u' + ch.charCodeAt(0).toString(16).padStart(4, '0')),
   /**
-   * 解析最终 appName：
+   * 解析最终 appName:
    *   1. config.appName
    *   2. 用户项目 package.json 的 name
    *   3. 'MyApp'
@@ -24,16 +24,16 @@ const escapeProps = s =>
     }
     return 'MyApp';
   },
-  /** 通用字符串转义基础：\\, ", \n, \r, \t */
+  /** 通用字符串转义基础:\\, ", \n, \r, \t */
   escapeStringBase = s => String(s)
     .replace(/\\/g, '\\\\')
     .replace(/"/g, '\\"')
     .replace(/\n/g, '\\n')
     .replace(/\r/g, '\\r')
     .replace(/\t/g, '\\t'),
-  /** Kotlin 字符串字面量转义：基础 + 转义 $ */
+  /** Kotlin 字符串字面量转义:基础 + 转义 $ */
   escapeKotlinString = s => escapeStringBase(s).replace(/\$/g, '\\$'),
-  /** Swift 字符串字面量转义：基础 + 转义 \( */
+  /** Swift 字符串字面量转义:基础 + 转义 \( */
   escapeSwiftString = s => escapeStringBase(s).replace(/\(/g, '\\('),
   escapeXml = s => {
     return String(s)
@@ -91,13 +91,13 @@ const escapeProps = s =>
       writeIfChanged(f, c);
     }
 
-    console.log(chalk.green(`    ✓ 应用信息：${appName} (${appId}) v${versionName}(${versionCode})`));
+    console.log(chalk.green(`    ✓ 应用信息:${appName} (${appId}) v${versionName}(${versionCode})`));
   },
   /**
-   * 把 mobileAppConfig.js 里的 Android 编译配置写入 buildDir：
-   *   - android/build.gradle 的 ext 块：minSdkVersion / targetSdkVersion / compileSdkVersion / buildToolsVersion
-   *   - android/app/build.gradle 的 manifestPlaceholders：usesCleartextTraffic
-   *   - AndroidManifest.xml：permissions（去重,始终含 INTERNET）
+   * 把 mobileAppConfig.js 里的 Android 编译配置写入 buildDir:
+   *   - android/build.gradle 的 ext 块:minSdkVersion / targetSdkVersion / compileSdkVersion / buildToolsVersion
+   *   - android/app/build.gradle 的 manifestPlaceholders:usesCleartextTraffic
+   *   - AndroidManifest.xml:permissions(去重,始终含 INTERNET)
    */
   patchAndroidConfig = (buildDir, config) => {
     const a = config.android || {}, rootGradle = path.join(buildDir, 'android', 'build.gradle'),
@@ -125,7 +125,8 @@ const escapeProps = s =>
       if (!c.includes('xmlns:tools=')) {
         c = c.replace(
           /<manifest\s+xmlns:android="[^"]*"/,
-          '<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"'
+          '<manifest xmlns:android="http://schemas.android.com/apk/res/android" ' +
+          'xmlns:tools="http://schemas.android.com/tools"'
         );
       }
       // 替换占位符值为实际值
@@ -150,15 +151,16 @@ const escapeProps = s =>
       writeIfChanged(manifestFile, c);
     }
 
-    console.log(chalk.green(`    ✓ Android 配置：SDK ${a.minSdkVersion}/${a.targetSdkVersion}/${a.compileSdkVersion},
+    console.log(chalk.green(`    ✓ Android 配置:SDK ${a.minSdkVersion}/${a.targetSdkVersion}/${a.compileSdkVersion},
       权限 ${new Set(['android.permission.INTERNET', ...(a.permissions || [])]).size} 项`));
   },
   /**
-   * 处理 Release 签名：
-   *   - config.android.signing 有值 → 写 keystore 路径到 gradle.properties,加 signingConfigs.release 块,release buildType 用它
-   *   - 没值 → 不动（release 沿用 debug,可装但不可发布）
+   * 处理 Release 签名:
+   * - config.android.signing 有值 → 写 keystore 路径到 gradle.properties,
+   * 加 signingConfigs.release 块,release buildType 用它
+   *   - 没值 → 不动(release 沿用 debug,可装但不可发布)
    *
-   * keystore 路径以用户项目根为基准。
+   * keystore 路径以用户项目根为基准;
    */
   patchSigning = (buildDir, userProjectDir, config) => {
     const signing = config.android && config.android.signing;
@@ -168,16 +170,17 @@ const escapeProps = s =>
     const _missing = ['storePassword', 'keyAlias', 'keyPassword'].filter((k) => !signing[k]);
     if (_missing.length > 0) {
       throw new Error(
-        'android.signing.keystore 已配置,但以下字段为空：' + _missing.join(', ') + '\n' +
-        '  启用签名后,keystore / storePassword / keyAlias / keyPassword 四项均为必填。\n' +
-        '  如仅需本地测试（不签名上架）,可注释掉整个 signing 块——模板默认用 debug keystore 签名。'
+        'android.signing.keystore 已配置,但以下字段为空:' + _missing.join(', ') + '\n' +
+        '  启用签名后,keystore / storePassword / keyAlias / keyPassword 四项均为必填;\n' +
+        '  如仅需本地测试(不签名上架),可注释掉整个 signing 块--模板默认用 debug keystore 签名;'
       );
     }
 
     const keystoreAbs = path.resolve(userProjectDir, signing.keystore);
-    if (!fs.existsSync(keystoreAbs)) return console.warn(chalk.yellow('  ⚠️  签名 keystore 不存在,跳过签名配置: ' + keystoreAbs));
+    if (!fs.existsSync(keystoreAbs))
+      return console.warn(chalk.yellow('  ⚠️  签名 keystore 不存在,跳过签名配置: ' + keystoreAbs));
 
-    // 1. 写 gradle.properties（追加或覆盖 MYAPP_RELEASE_*）
+    // 1. 写 gradle.properties(追加或覆盖 MYAPP_RELEASE_*)
     const propsFile = path.join(buildDir, 'android', 'gradle.properties');
     if (fs.existsSync(propsFile)) {
       let c = fs.readFileSync(propsFile, 'utf-8');
@@ -188,7 +191,7 @@ const escapeProps = s =>
       c = c.replace(/^\s*MYAPP_RELEASE_KEY_PASSWORD=.*\r?\n/gm, '');
       // 追加新的
       // gradle.properties 按 ISO-8859-1 读取,非 ASCII 字符必须转 \uXXXX 转义,
-      // 否则中文路径（如「桌面」）会被读成乱码,导致 keystore 找不到。
+      // 否则中文路径(如"桌面")会被读成乱码,导致 keystore 找不到;
       const esc = escapeProps(keystoreAbs.replace(/\\/g, '/'));
       c += `\nMYAPP_RELEASE_STORE_FILE=${esc}\n`;
       c += `MYAPP_RELEASE_STORE_PASSWORD=${escapeProps(signing.storePassword || '')}\n`;
@@ -202,7 +205,7 @@ const escapeProps = s =>
     if (fs.existsSync(gradleFile)) {
       let c = fs.readFileSync(gradleFile, 'utf-8');
 
-      // 加 release 签名块（先删旧的,避免重复）
+      // 加 release 签名块(先删旧的,避免重复)
       c = c.replace(/\s*release\s*\{\s*storeFile[\s\S]*?\}\r?\n(\s*\}\s*\r?\n)/, '$1');
       // 在 signingConfigs { 之后插入
       c = c.replace(/(signingConfigs\s*\{)/,
@@ -224,7 +227,7 @@ const escapeProps = s =>
     console.log(chalk.green('    ✓ Release 签名已配置: ' + path.basename(keystoreAbs)));
   },
   /**
-   * 应用图标：把用户提供的 PNG 缩放到 5 个 Android 密度,覆盖各 mipmap 目录下的 ic_launcher 与 ic_launcher_round
+   * 应用图标:把用户提供的 PNG 缩放到 5 个 Android 密度,覆盖各 mipmap 目录下的 ic_launcher 与 ic_launcher_round
    * 未配置或文件不存在时保持默认
    */
   patchIcon = async (buildDir, userProjectDir, config) => {
@@ -258,10 +261,11 @@ const escapeProps = s =>
     console.log(chalk.green(`    ✓ 图标已应用: ${path.basename(iconAbs)}`));
   },
   /**
-   * 写入 iOS 工程配置：
+   * 写入 iOS 工程配置:
    *   - Info.plist: CFBundleDisplayName
-   *   - project.pbxproj: PRODUCT_BUNDLE_IDENTIFIER / MARKETING_VERSION / CURRENT_PROJECT_VERSION / IPHONEOS_DEPLOYMENT_TARGET
-   * 只在 buildDir 里存在 ios/ 时执行（其余平台跳过）。
+   * - project.pbxproj: PRODUCT_BUNDLE_IDENTIFIER /
+   * MARKETING_VERSION / CURRENT_PROJECT_VERSION / IPHONEOS_DEPLOYMENT_TARGET
+   * 只在 buildDir 里存在 ios/ 时执行(其余平台跳过);
    */
   patchIosConfig = (buildDir, userProjectDir, config) => {
     const iosDir = path.join(buildDir, 'ios');
@@ -271,7 +275,7 @@ const escapeProps = s =>
       versionCode = config.versionCode, deploymentTarget = (config.ios?.deploymentTarget) || '15.1',
       plist = path.join(iosDir, 'MyApp', 'Info.plist'), pbx = path.join(iosDir, 'MyApp.xcodeproj', 'project.pbxproj'),
       appDelegate = path.join(iosDir, 'MyApp', 'AppDelegate.swift');
-    // 1. Info.plist：CFBundleDisplayName + ATS (对应 Android 的 usesCleartextTraffic)
+    // 1. Info.plist:CFBundleDisplayName + ATS (对应 Android 的 usesCleartextTraffic)
     if (fs.existsSync(plist)) {
       let c = fs.readFileSync(plist, 'utf-8');
 
@@ -336,12 +340,13 @@ const escapeProps = s =>
       writeIfChanged(appDelegate, c);
     }
 
-    console.log(chalk.green(`    ✓ iOS 配置：${appName} (${appId}) v${versionName}(${versionCode}), target ${deploymentTarget}`));
+    console.log(chalk.green(`    ✓ iOS 配置:${appName} (${appId}) v${versionName}(${versionCode})` +
+        `, target ${deploymentTarget}`));
   },
   /**
-   * iOS 应用图标：把用户提供的 PNG 缩放到 9 个尺寸,写入 AppIcon.appiconset
+   * iOS 应用图标:把用户提供的 PNG 缩放到 9 个尺寸,写入 AppIcon.appiconset
    * 同时改写 Contents.json 加 filename 字段
-   * 未配置或文件不存在时保持默认（无图标,Xcode 会用系统占位）
+   * 未配置或文件不存在时保持默认(无图标,Xcode 会用系统占位)
    */
   patchIosIcon = async (buildDir, userProjectDir, config) => {
     const iconPath = config.ios && config.ios.icon;
@@ -354,7 +359,7 @@ const escapeProps = s =>
     if (!fs.existsSync(iconDir)) return;
 
     const { Jimp } = await import('jimp'), source = await Jimp.read(iconAbs),
-      // Apple 规范：每项 (idiom, size, scale) 对应的像素尺寸与文件名
+      // Apple 规范:每项 (idiom, size, scale) 对应的像素尺寸与文件名
       variants = [
         { idiom: 'iphone', size: '20x20', scale: '2x', px: 40, name: 'Icon-App-20x20@2x.png' },
         { idiom: 'iphone', size: '20x20', scale: '3x', px: 60, name: 'Icon-App-20x20@3x.png' },
