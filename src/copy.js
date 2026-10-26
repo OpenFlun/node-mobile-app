@@ -182,7 +182,7 @@ const BUILD_DIR_NAME = 'node-mobile-app-build',
     if (!fs.existsSync(userPkgPath)) throw new Error('用户项目缺少 package.json');
     const pkg = readJson(userPkgPath), out = { ...pkg };
     delete out.devDependencies;
-    out.allowScripts 
+    out.allowScripts =
       (config.allowScripts && Object.keys(config.allowScripts).length) ? config.allowScripts : { node: true };
     writeIfChanged(path.join(targetDir, 'package.json'), JSON.stringify(out, null, 2) + '\n');
 
