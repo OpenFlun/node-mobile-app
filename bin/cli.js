@@ -4,22 +4,26 @@ import { runBuild } from '../src/commands/build.js';
 import { runClean } from '../src/commands/clean.js';
 import chalk from 'chalk';
 
-const HELP = `
-@flun/node-mobile-app
+const HELP = `用法: node-mobile-app <命令> [选项]
 
-指令:
-  node-mobile-app test              编译并安装到设备(Android,需连 USB,走 Metro 热更新)
-  node-mobile-app test --ios        iOS 版(仅 macOS)
-  node-mobile-app build             打 debug APK(Android,离线可用)
-  node-mobile-app build --release   打 release APK(Android,默认 debug keystore 签名,可安装)
-  node-mobile-app build --ios       打 IPA(仅 macOS)
-  node-mobile-app clean             清理构建缓存(不限平台)
+  命令:
+    test              编译并安装到设备(走 Metro 热更新)
+                        Android  默认,需 adb 可连的设备(真机或模拟器),默认配置 'arm64-v8a'(真机)
+                        iOS      加 --ios,仅 macOS
+    build             打包
+                        Android  默认 debug APK,离线可用;加 --release 打 release APK
+                        iOS      加 --ios,仅 macOS,打 IPA;加 --release 用 Release 配置与 ad-hoc 导出
+    clean             清理构建缓存(不限平台)
 
-选项:
-  --device <id>   指定设备(仅 test)
-  --arch <abi>    指定 ABI,逗号分隔(仅 build,Android)
-  --debug         显示详细日志(所有指令通用)
-`,
+  选项:
+    --ios             目标为 iOS;test 与 build 均可用,仅 macOS
+    --release         打 release 包;仅 build 可用,Android 与 iOS 均生效;
+                      打包安卓包时,请根据使用场景配置签名(走默认/自签名/正式签名);
+    --device <id>     指定设备;仅 test
+    --arch <abi>      指定 ABI,逗号分隔;仅 build,Android
+    --debug           显示详细日志;所有命令通用
+
+  无参数、help、-h、--help 输出本帮助。`,
 
   parseFlags = args => {
     const f = {};
@@ -40,7 +44,8 @@ const HELP = `
       if (cmd === 'test') await runTest(flags);
       else if (cmd === 'build') await runBuild(flags);
       else if (cmd === 'clean') await runClean(flags);
-      else { console.log(HELP); process.exit(cmd ? 1 : 0); }
+      else if (!cmd || cmd === 'help' || cmd === '-h' || cmd === '--help') { console.log(HELP); process.exit(0); }
+      else { console.error(chalk.yellow(`✗ 未知命令: ${cmd}\n`)), console.log(HELP), process.exit(1); }
     } catch (e) {
       console.error(chalk.red('\n❌ ' + e.message));
       if (process.env.DEBUG) console.error(chalk.red(e.stack));

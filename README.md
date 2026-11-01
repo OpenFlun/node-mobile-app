@@ -1,5 +1,7 @@
 # @flun/node-mobile-app
 
+## 简介
+
 将 Node.js 项目一键打包为 Android / iOS 移动应用;运行时由 @flun/nodejs-mobile-react-native 提供,无需修改你的 Node 代码;
 
 **核心理念**:你的 Node 项目保持不变,CLI 负责搬运,编译,打包;所有定制集中在 `mobileAppConfig.js` 一个文件;
@@ -25,21 +27,8 @@
 
 ---
 
-## 环境要求(最低)
+## 包目录结构
 
-| 项           | 要求                                                             |
-| ------------ | ---------------------------------------------------------------- |
-| Node.js      | 需满足 `package.json` 的 `engines.node` 字段                     |
-| Android 构建 | JDK **17**,Android SDK(minSdk 29 / targetSdk 36 / compileSdk 37) |
-| iOS 构建     | macOS + 完整 Xcode + CocoaPods                                   |
-| 可选         | watchman(提升 Metro 文件监听性能)                                |
-| Windows 额外 | Visual Studio + Git for Windows(仅编译原生模块时需要,见下方说明) |
-
-**JDK 必须是 17**,Android Gradle Plugin 目前不支持更高版本;
-
----
-
-## 本包目录结构:
 ```txt
 @flun/node-mobile-app/
 │
@@ -57,9 +46,8 @@
 │   ├── copy.js                   # 模板复制 / 你的项目复制 / ABI patch / extraRnDependencies 注入
 │   ├── fingerprint.js            # 缓存指纹(判断是否需要清理构建缓存)
 │   ├── generate.js               # 生成 main.js(桥接)+ mobileApp.runtime.ts(运行时配置)
-│   ├── install.js                # 依赖安装 + 原生模块交叉编译(前移至优化前) + 插件 abiFilters patch + WebView SSL patch
-│   ├── optimize-node-modules.js  # node_modules 优化(六阶段:清资源 / 合并 JS / 清平台二进制 / 清开发文件与编译源文件 / 清 
-node-gyp 中间产物 / 清冗余与空目录)
+│   ├── install.js                # 依赖安装 + 原生模块编译 + 插件 abiFilters/SSL patch
+│   ├── optimize-node-modules.js  # node_modules 优化(六阶段:资源/JS合并/二进制/开发文件/中间产物)
 │   ├── patcher.js                # 应用信息 / Android / iOS 配置 patch
 │   ├── platform-ios.js           # iOS 构建(pod install / xcodebuild archive / export)
 │   ├── utils.js                  # 通用工具(文件操作 / 进程调用 / adb / hermesc 定位)
@@ -119,7 +107,20 @@ node-gyp 中间产物 / 清冗余与空目录)
 - 改完后需 `watchman watch-del-all && watchman shutdown-server` 才生效
 
 ---
-## 基本配置
+
+---
+
+## 安装前准备
+
+| 项           | 要求                                                             |
+| ------------ | ---------------------------------------------------------------- |
+| Node.js      | 需满足 `package.json` 的 `engines.node` 字段                     |
+| Android 构建 | JDK **17**,Android SDK(minSdk 29 / targetSdk 36 / compileSdk 37) |
+| iOS 构建     | macOS + 完整 Xcode + CocoaPods                                   |
+| 可选         | watchman(提升 Metro 文件监听性能)                                |
+| Windows 额外 | Visual Studio + Git for Windows(仅编译原生模块时需要,见下方说明) |
+
+**JDK 必须是 17**,Android Gradle Plugin 目前不支持更高版本;
 
 ### 允许安装脚本执行
 
@@ -139,6 +140,7 @@ node-gyp 中间产物 / 清冗余与空目录)
 ```
 
 ---
+
 ## 安装
 
 ```bash
@@ -148,31 +150,32 @@ npm i -D @flun/node-mobile-app
 安装完成后,会在你的项目根目录自动生成 `mobileAppConfig.js`(配置文件模板);
 ---
 
-## 快速开始
+## 命令行
+
+### 快速开始
 
 ```bash
-# 1. 编辑配置
-#    打开 mobileAppConfig.js,改 appId / appName / serverPath 等
+# 1. 编辑配置:打开 mobileAppConfig.js,改 appId / appName / serverPath 等
 
-# 2. 开发调试(需连 USB,走 Metro 热更新,如需用模拟器请在 mobileAppConfig.js文件中显式配置)
+# 2. 开发调试(需 adb 可连的设备,走 Metro 热更新)
 npx node-mobile-app test
 
 # 3. 打包发布
 npx node-mobile-app build --release
 ```
 
----
-
-## 命令说明
+### 命令
 
 - `npx node-mobile-app test`
-  - 编译并安装到设备(**需连 USB**);自动启动 Metro 并后台常驻,支持热更新;设备已装包签名不一致时自动卸载
+  - 编译并安装到设备(**需 adb 可连的设备**,真机或模拟器;默认架构 arm64-v8a);自动启动 Metro 并后台常驻,
+    支持热更新;设备已装包签名不一致时自动卸载
 - `npx node-mobile-app test --ios`
   - iOS 版(仅 macOS)
 - `npx node-mobile-app build`
   - 打 debug APK(**离线可用**)
 - `npx node-mobile-app build --release`
-  - 打 release APK(默认用 debug keystore 签名,可安装;上架需配置 `android.signing`)
+  - 打 release APK(Android 与 iOS 均生效);未配置 `android.signing` 时用模板自带 debug keystore 签名,
+    可安装但不可上架;配置后改用正式签名
 - `npx node-mobile-app build --ios`
   - 打 IPA(仅 macOS)
 - `npx node-mobile-app clean`
@@ -180,13 +183,13 @@ npx node-mobile-app build --release
 
 ### 常用选项
 
-| 选项            | 用途                                        |
-| --------------- | ------------------------------------------- |
-| `--ios`         | 目标平台为 iOS(默认 Android)                |
-| `--release`     | 打 release 包(仅 `build`)                   |
-| `--device <id>` | 指定设备(`test`)                            |
-| `--arch <abi>`  | 指定 ABI,逗号分隔(`build`,仅 Android)       |
-| `--debug`       | 显示详细日志(优化各阶段明细,各命令完整输出) |
+| 选项 | 用途 |
+| --- | --- |
+| `--ios` | 目标平台为 iOS(默认 Android) |
+| `--release` | 打 release 包(仅 `build`,Android 与 iOS 均生效) |
+| `--device <id>` | 指定设备(`test`) |
+| `--arch <abi>` | 指定 ABI,逗号分隔(`build`,仅 Android) |
+| `--debug` | 显示详细日志(优化各阶段明细,各命令完整输出) |
 
 ### 安装 APK 到手机
 
@@ -225,25 +228,7 @@ adb install -r "./out/myapp-1.0.0-release.apk"
 - `adb` 找不到?在 `mobileAppConfig.js` 里配 `android.adbPath`
 - `test` 命令已自动处理签名冲突并安装,无需手动
 
----
-
-## 自动化机制
-
-- **快照双哈希**:`.deps-snapshot.json` 记录 `optimizeHash`(`optimize-node-modules.js` 内容哈希)与 
-  `installerHash`(`install.js` 内容哈希);任一变化即触发重装、重编、重优化,避免流程代码更新后仍复用旧缓存;
-- **bundle 变化失效 Gradle 缓存**:`test` 生成 JS bundle 后,与 
-  `android/app/build/intermediates/assets/debug/mergeDebugAssets/` 中的合并结果比对 SHA256;不一致时删除合并目录,强制 
-  Gradle 重新合并;一致时保持 UP-TO-DATE;
-- **编译前执行 `patch-package.js`**:把原生模块 `package.json` 中的 `node-gyp-build` 替换为 `node-gyp-build-mobile`,
-  使编译走 `@flun/nodejs-mobile-gyp` 而非 npm 自带的 `node-gyp`;
-- **Metro 生命周期**:`test` 执行前检测 `localhost:8081/status`;未运行则以 detached 方式启动 `react-native start`(日志写入 
-  `node-mobile-app-build/.metro.log`),就绪后继续;`run-android` 加 `--no-packager`,命令结束后 Metro 保持运行;30 
-  秒未就绪打印警告并回落到 APK 内置 bundle;
-- **输出分级**:步骤标题 0 空格,动作与状态 2 空格,结果与完成 4 空格,子项详情 8 空格;优化阶段作为步骤子项,阶段标题 4 空格、
-  阶段结果 6 空格;
-- **精简与详细双模式**:默认只输出关键行与结果,`--debug` 或 `OPTIMIZE_DEBUG=1` 时全量输出(含 Gradle 与 Metro 完整日志);
-
-## 配置文件 `mobileAppConfig.js`
+## 参考配置
 
 所有定制集中在这一个文件;**不配置也能跑**(用默认值);
 
@@ -457,6 +442,22 @@ signing: {
 - `optimize: { exclude: ['包名'] }` 排除优化时异常或不想优化的包;
 - 加 `--debug` 查看优化各阶段明细与各命令完整输出.
 
+## 自动化机制
+
+- **快照双哈希**:`.deps-snapshot.json` 记录 `optimizeHash`(`optimize-node-modules.js` 内容哈希)与 
+  `installerHash`(`install.js` 内容哈希);任一变化即触发重装、重编、重优化,避免流程代码更新后仍复用旧缓存;
+- **bundle 变化失效 Gradle 缓存**:`test` 生成 JS bundle 后,与 
+  `android/app/build/intermediates/assets/debug/mergeDebugAssets/` 中的合并结果比对 SHA256;不一致时删除合并目录,强制 
+  Gradle 重新合并;一致时保持 UP-TO-DATE;
+- **编译前执行 `patch-package.js`**:把原生模块 `package.json` 中的 `node-gyp-build` 替换为 `node-gyp-build-mobile`,
+  使编译走 `@flun/nodejs-mobile-gyp` 而非 npm 自带的 `node-gyp`;
+- **Metro 生命周期**:`test` 执行前检测 `localhost:8081/status`;未运行则以 detached 方式启动 `react-native start`(日志写入 
+  `node-mobile-app-build/.metro.log`),就绪后继续;`run-android` 加 `--no-packager`,命令结束后 Metro 保持运行;30 
+  秒未就绪打印警告并回落到 APK 内置 bundle;
+- **输出分级**:步骤标题 0 空格,动作与状态 2 空格,结果与完成 4 空格,子项详情 8 空格;优化阶段作为步骤子项,阶段标题 4 空格、
+  阶段结果 6 空格;
+- **精简与详细双模式**:默认只输出关键行与结果,`--debug` 或 `OPTIMIZE_DEBUG=1` 时全量输出(含 Gradle 与 Metro 完整日志);
+
 ## 服务地址说明
 
 CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Server.prototype.listen`,从 `server.address()` 取真实端口,从 
@@ -499,7 +500,7 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Ser
 | 运行时版本   | 官方提供多个版本,可用 `NODE_MOBILE_PREBUILT_VERSION` 切换 | **当前为 v18.20.4**,更高版本后续逐步适配 |
 | Express 版本 | 产物带 full-icu,4.x / 5.x 均可用                          | 当前产物不带 full-icu,**必须用 4.x**     |
 | full-icu     | 自 v22.23.2 产物起支持                                    | 暂无                                     |
-| `test` 离线  | ✓(内置 bundle)                                            | ✓(需 `FORCE_BUNDLING=1`)                 |
+| `test` 离线  | 有(内置 bundle)                                            | 有(需 `FORCE_BUNDLING=1`)                 |
 | 图标尺寸     | 5 个密度(48~192)                                          | 9 个尺寸(40~1024)                        |
 
 **iOS 运行时版本**:iOS 附件的实际运行时版本随适配进度变化,**当前对应 v18.20.4**;如需更高版本,可克隆 [nodejs-mobile 
@@ -533,6 +534,13 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Ser
             ├── package.json  # 只保留 dependencies
             └── node_modules/ # 你的生产依赖
 ```
+
+---
+
+## 相关文档
+
+- [Android 构建指南.md](./Android%20构建指南.md) -- Android 环境配置,踩坑清单
+- [自定义libnode指南.md](./自定义libnode指南.md) -- 自编译 `libnode.so` 的完整流程
 
 ---
 
@@ -640,13 +648,14 @@ fallback 到内置 bundle;届时反馈,我们更新适配;
 
 ---
 
-## 相关文档
+## 许可证
 
-- [Android 构建指南.md](./Android%20构建指南.md) -- Android 环境配置,踩坑清单
-- [自定义libnode指南.md](./自定义libnode指南.md) -- 自编译 `libnode.so` 的完整流程
+ISC
 
 ---
 
-## 许可
+## 贡献
 
-ISC
+- 源码:[GitHub](https://github.com/OpenFlun/node-mobile-app)
+- 问题反馈:[Issues](https://github.com/OpenFlun/node-mobile-app/issues)
+- 主页:[npm 包页面](https://www.npmjs.com/package/@flun/node-mobile-app#readme)
