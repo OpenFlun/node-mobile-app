@@ -1,3 +1,38 @@
-# 所有 bin 脚本:Windows 检出为 CRLF,Unix 检出为 LF
-bin/* text eol=crlf
-*.js text eol=crlf
+# 默认:文本文件,仓库内统一 LF
+* text=auto eol=lf
+
+# 源码与文档
+*.js     text eol=lf
+*.mjs    text eol=lf
+*.cjs    text eol=lf
+*.json   text eol=lf
+*.md     text eol=lf
+*.ts     text eol=lf
+
+# Unix shell 脚本:必须 LF,否则 Linux/macOS 执行报错
+*.sh     text eol=lf
+
+# Windows 专属脚本:CRLF
+*.bat    text eol=crlf
+*.cmd    text eol=crlf
+*.ps1    text eol=crlf
+
+# 二进制文件(不做换行符转换)
+*.exe     binary
+*.dll     binary
+*.node    binary
+*.so      binary
+*.dylib   binary
+*.a       binary
+*.lib     binary
+*.jar     binary
+*.zip     binary
+*.tgz     binary
+*.gz      binary
+*.tar     binary
+*.7z      binary
+*.png     binary
+*.jpg     binary
+*.ico     binary
+*.woff    binary
+*.woff2   binary
