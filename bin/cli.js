@@ -3,6 +3,7 @@ import chalk from 'chalk';
 import { runTest } from '../src/commands/test.js';
 import { runBuild } from '../src/commands/build.js';
 import { runClean } from '../src/commands/clean.js';
+import { copyFile } from '../scripts/copy-files.js';
 
 // 输出用法;
 const printHelp = () => {
@@ -18,7 +19,8 @@ const printHelp = () => {
     cmd('build', '打包'),
     sub('Android 默认 debug APK,离线可用;加 --release 打 release APK'),
     sub('iOS 加 --ios,仅 macOS,打 IPA;加 --release 用 Release 配置与 ad-hoc 导出'),
-    cmd('clean', '清理构建缓存,不限平台'), '',
+    cmd('clean', '清理构建缓存,不限平台'),
+    cmd('example', '重新生成 mobileAppConfig.js;误删时使用'), '',
     grp('选项'),
     cmd('--ios', '目标为 iOS;test 与 build 均可用,仅 macOS'),
     cmd('--release', '打 release 包;仅 build 可用,Android 与 iOS 均生效'),
@@ -53,6 +55,7 @@ const printHelp = () => {
       if (cmd === 'test') await runTest(flags);
       else if (cmd === 'build') await runBuild(flags);
       else if (cmd === 'clean') await runClean(flags);
+      else if (cmd === 'example') return process.exit(copyFile() ? 0 : 1);
       else if (!cmd || cmd === 'help' || cmd === '-h' || cmd === '--help') return printHelp(), process.exit(0);
       else {
         console.error(chalk.red('✗ 未知命令: ') + chalk.yellow(cmd)), console.log('');

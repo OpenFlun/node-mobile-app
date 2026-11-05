@@ -179,6 +179,8 @@ npx node-mobile-app build --release
   - 打 IPA(仅 macOS)
 - `npx node-mobile-app clean`
   - 清理构建缓存
+- `npx node-mobile-app example`
+  - 重新生成 `mobileAppConfig.js`;配置文件被误删时使用,已存在则跳过
 
 ### 常用选项
 

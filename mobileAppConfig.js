@@ -11,6 +11,7 @@
  *   npx node-mobile-app build --release 打 release APK(默认 debug keystore 签名,可安装;上架需配 android.signing)
  *   npx node-mobile-app build --ios     打 IPA(仅 macOS)
  *   npx node-mobile-app clean           清理构建缓存
+ *   npx node-mobile-app example         重新生成此配置文件;误删时使用
  *
  *   任意命令加 --debug 可显示详细日志(优化各阶段明细、各命令完整输出)
  *
