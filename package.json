@@ -29,12 +29,11 @@
     "src/",
     "template/",
     "自定义libnode指南.md",
-    "Android 构建指南.md",
+    "Android构建指南.md",
     "CHANGELOG.md",
     "README.md",
     "LICENSE",
-    "mobileAppConfig.js",
-    "package.json"
+    "mobileAppConfig.js"
   ],
   "scripts": {
     "postinstall": "node scripts/copy-files.js"

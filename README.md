@@ -20,7 +20,7 @@
 - **跨平台**:Android(Windows / macOS / Linux)+ iOS(仅 macOS)
 - **离线可用**:`build` 打出的 APK / IPA 内置 JS,无需连电脑也能跑
 - **node_modules 优化(默认开启)**:构建时先交叉编译原生模块,再自动执行六阶段优化--先清空 postinstall 资源(保留 js 供合并),
-  再合并 JS,清平台二进制,清开发文件,清中间产物,清冗余与空目录;编译源文件与 node-gyp 中间产物在编译完成后一并清理,仅保留 
+  再合并 JS,清平台二进制,清开发文件,清中间产物,清冗余与空目录;编译源文件与 node-gyp 中间产物在编译完成后一并清理,仅保留
   `.node`;大幅减少打包文件数与体积,加速启动,无需配置;
 - **热更新开箱可用**:`test` 自动启动 Metro 并后台常驻,命令结束后仍可热更新;详见 [自动化机制](#自动化机制);
 - **签名切换自动处理**:设备已装包与待装包签名不一致时,`test` 自动卸载重装,避免 `INSTALL_FAILED_UPDATE_INCOMPATIBLE`;
@@ -71,12 +71,14 @@
 │   ├── Gemfile
 │   └── .watchmanconfig          # watchman 文件监控配置(详见下方说明)
 │
-├── mobileAppConfig.js            # 你的配置模板(postinstall 时复制到你的项目根)
-├── package.json
-├── README.md                     # 本文件
-├── Android构建指南.md             # Android 环境配置与踩坑清单
+├── 非导出略...
 ├── 自定义libnode指南.md           # 自编译 libnode.so 的完整流程
-└── 其它略...
+├── Android构建指南.md             # Android 环境配置与踩坑清单
+├── CHANGELOG.md                  # 更新日志
+├── README.md                     # 本文件
+├── LICENSE                       # 许可证
+├── mobileAppConfig.js            # 你的配置模板(postinstall 时复制到你的项目根)
+└── package.json                  # 包配置
 ```
 
 **关键约定**:
@@ -124,7 +126,7 @@
 
 ### 允许安装脚本执行
 
-本包在安装时可能触发某些依赖包的自动脚本(如 `postinstall` 等);如果你的 npm 全局配置或项目配置禁止了脚本执行(例如设置了 
+本包在安装时可能触发某些依赖包的自动脚本(如 `postinstall` 等);如果你的 npm 全局配置或项目配置禁止了脚本执行(例如设置了
 `ignore-scripts=true`),可能会导致安装不完整或运行时异常;
 
 推荐在项目根目录的 `package.json` 中添加 `allowScripts` 字段,显式放行本包及其依赖的脚本:
@@ -183,13 +185,13 @@ npx node-mobile-app build --release
 
 ### 常用选项
 
-| 选项 | 用途 |
-| --- | --- |
-| `--ios` | 目标平台为 iOS(默认 Android) |
-| `--release` | 打 release 包(仅 `build`,Android 与 iOS 均生效) |
-| `--device <id>` | 指定设备(`test`) |
-| `--arch <abi>` | 指定 ABI,逗号分隔(`build`,仅 Android) |
-| `--debug` | 显示详细日志(优化各阶段明细,各命令完整输出) |
+| 选项            | 用途                                            |
+| --------------- | ----------------------------------------------- |
+| `--ios`         | 目标平台为 iOS(默认 Android)                    |
+| `--release`     | 打 release 包(仅 `build`,Android 与 iOS 均生效) |
+| `--device <id>` | 指定设备(`test`)                                |
+| `--arch <abi>`  | 指定 ABI,逗号分隔(`build`,仅 Android)           |
+| `--debug`       | 显示详细日志(优化各阶段明细,各命令完整输出)     |
 
 ### 安装 APK 到手机
 
@@ -222,8 +224,8 @@ adb install -r "./out/myapp-1.0.0-release.apk"
 
 **说明**:
 - `-r` = 覆盖安装(保留应用数据)
-- **签名不同的包不能互相覆盖**:`build` 的 release 包用 `android.signing` 的 keystore 签名,`test` / `build` 的 debug 
-  包用模板自带 debug keystore 签名;两者包名相同但签名不同,直接 `install -r` 会报 
+- **签名不同的包不能互相覆盖**:`build` 的 release 包用 `android.signing` 的 keystore 签名,`test` / `build` 的 debug
+  包用模板自带 debug keystore 签名;两者包名相同但签名不同,直接 `install -r` 会报
   `INSTALL_FAILED_UPDATE_INCOMPATIBLE: signatures do not match`;需先执行 `adb uninstall <appId>` 再安装(会清除应用数据)
 - `adb` 找不到?在 `mobileAppConfig.js` 里配 `android.adbPath`
 - `test` 命令已自动处理签名冲突并安装,无需手动
@@ -423,13 +425,13 @@ signing: {
 **编译与优化顺序**:先交叉编译原生模块(见 `install.js`),再执行以下六阶段优化:
 
 1. **清空资源**:扫描各包 `postinstall` 引用的目录/文件,保留目录结构,清空内容;js 文件一律保留,留待合并阶段处理;
-2. **合并 JS**:按包入口 bundle,多个 JS 文件合并为单文件(`bundled/` 目录);合并后同步删除 `package.json` 的 `scripts` 
+2. **合并 JS**:按包入口 bundle,多个 JS 文件合并为单文件(`bundled/` 目录);合并后同步删除 `package.json` 的 `scripts`
    字段(运行时无安装期,且 Gradle `npm rebuild` 会触发脚本导致失败);
 3. **清平台二进制**:按目标平台 + `abiFilters` 判定;`prebuilds/<platform>-<arch>` 按目录整体处理--Android 只保留 `android`,
    `linux` / `darwin` / `win32` 删除;iOS 只保留 `darwin`;其余二进制逐文件按文件头判定;
 4. **清开发文件与编译源文件**:删除 `.md` / `.map` / `.d.ts` / `.h` / `.c` / `.cc` / `.cpp` / `.cxx` 等非运行文件;
    原生模块已在优化前完成编译,编译源文件无需保留;
-5. **清 node-gyp 中间产物**:删除 `build/Release/obj.target/` 下的中间副本,以及 `.o` / `.d` / `.mk` / `.stamp` / `Makefile` 
+5. **清 node-gyp 中间产物**:删除 `build/Release/obj.target/` 下的中间副本,以及 `.o` / `.d` / `.mk` / `.stamp` / `Makefile`
    等编译中间文件;
 6. **清不参与运行的文件和空目录**.
 
@@ -444,15 +446,15 @@ signing: {
 
 ## 自动化机制
 
-- **快照双哈希**:`.deps-snapshot.json` 记录 `optimizeHash`(`optimize-node-modules.js` 内容哈希)与 
+- **快照双哈希**:`.deps-snapshot.json` 记录 `optimizeHash`(`optimize-node-modules.js` 内容哈希)与
   `installerHash`(`install.js` 内容哈希);任一变化即触发重装、重编、重优化,避免流程代码更新后仍复用旧缓存;
-- **bundle 变化失效 Gradle 缓存**:`test` 生成 JS bundle 后,与 
-  `android/app/build/intermediates/assets/debug/mergeDebugAssets/` 中的合并结果比对 SHA256;不一致时删除合并目录,强制 
+- **bundle 变化失效 Gradle 缓存**:`test` 生成 JS bundle 后,与
+  `android/app/build/intermediates/assets/debug/mergeDebugAssets/` 中的合并结果比对 SHA256;不一致时删除合并目录,强制
   Gradle 重新合并;一致时保持 UP-TO-DATE;
 - **编译前执行 `patch-package.js`**:把原生模块 `package.json` 中的 `node-gyp-build` 替换为 `node-gyp-build-mobile`,
   使编译走 `@flun/nodejs-mobile-gyp` 而非 npm 自带的 `node-gyp`;
-- **Metro 生命周期**:`test` 执行前检测 `localhost:8081/status`;未运行则以 detached 方式启动 `react-native start`(日志写入 
-  `node-mobile-app-build/.metro.log`),就绪后继续;`run-android` 加 `--no-packager`,命令结束后 Metro 保持运行;30 
+- **Metro 生命周期**:`test` 执行前检测 `localhost:8081/status`;未运行则以 detached 方式启动 `react-native start`(日志写入
+  `node-mobile-app-build/.metro.log`),就绪后继续;`run-android` 加 `--no-packager`,命令结束后 Metro 保持运行;30
   秒未就绪打印警告并回落到 APK 内置 bundle;
 - **输出分级**:步骤标题 0 空格,动作与状态 2 空格,结果与完成 4 空格,子项详情 8 空格;优化阶段作为步骤子项,阶段标题 4 空格、
   阶段结果 6 空格;
@@ -460,7 +462,7 @@ signing: {
 
 ## 服务地址说明
 
-CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Server.prototype.listen`,从 `server.address()` 取真实端口,从 
+CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Server.prototype.listen`,从 `server.address()` 取真实端口,从
 `Server` 类型判断 `http` / `https`;
 
 因此 `mobileAppConfig.js` **不需要**配置端口/协议;动态端口(`listen(0)`)会拿到系统分配的真实端口;
@@ -500,11 +502,11 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Ser
 | 运行时版本   | 官方提供多个版本,可用 `NODE_MOBILE_PREBUILT_VERSION` 切换 | **当前为 v18.20.4**,更高版本后续逐步适配 |
 | Express 版本 | 产物带 full-icu,4.x / 5.x 均可用                          | 当前产物不带 full-icu,**必须用 4.x**     |
 | full-icu     | 自 v22.23.2 产物起支持                                    | 暂无                                     |
-| `test` 离线  | 有(内置 bundle)                                            | 有(需 `FORCE_BUNDLING=1`)                 |
+| `test` 离线  | 有(内置 bundle)                                           | 有(需 `FORCE_BUNDLING=1`)                |
 | 图标尺寸     | 5 个密度(48~192)                                          | 9 个尺寸(40~1024)                        |
 
-**iOS 运行时版本**:iOS 附件的实际运行时版本随适配进度变化,**当前对应 v18.20.4**;如需更高版本,可克隆 [nodejs-mobile 
-仓库](https://github.com/OpenFlun/nodejs-mobile) 自行编译 `NodeMobile.xcframework`,流程与 Android 自编译 `libnode.so` 
+**iOS 运行时版本**:iOS 附件的实际运行时版本随适配进度变化,**当前对应 v18.20.4**;如需更高版本,可克隆 [nodejs-mobile
+仓库](https://github.com/OpenFlun/nodejs-mobile) 自行编译 `NodeMobile.xcframework`,流程与 Android 自编译 `libnode.so`
 类似(见 `自定义libnode指南.md`);
 
 ---
@@ -539,7 +541,7 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Ser
 
 ## 相关文档
 
-- [Android 构建指南.md](./Android%20构建指南.md) -- Android 环境配置,踩坑清单
+- [Android构建指南.md](./Android构建指南.md) -- Android 环境配置,踩坑清单
 - [自定义libnode指南.md](./自定义libnode指南.md) -- 自编译 `libnode.so` 的完整流程
 
 ---
@@ -548,8 +550,8 @@ CLI **自动识别 `server.js` 实际监听的协议和端口**--拦截 `net.Ser
 
 ### Q:`test` 拔掉 USB 后 App 加载慢?
 
-`test` 打的是 debug 版,启动时优先连 Metro;CLI 会在 `[9/11]` 自动启动 Metro 并保持后台常驻,但设备通过 `adb reverse` 访问 
-`localhost:8081`,**拔掉 USB 后端口转发失效**,设备连不上 Metro,debug 包等待超时后才回落到 APK 内置的 bundle;这个"等超时"是 
+`test` 打的是 debug 版,启动时优先连 Metro;CLI 会在 `[9/11]` 自动启动 Metro 并保持后台常驻,但设备通过 `adb reverse` 访问
+`localhost:8081`,**拔掉 USB 后端口转发失效**,设备连不上 Metro,debug 包等待超时后才回落到 APK 内置的 bundle;这个"等超时"是
 RN debug 版的固有行为;
 
 拔线后的启动速度(从快到慢):
@@ -558,12 +560,12 @@ RN debug 版的固有行为;
 2. **`npx node-mobile-app build`** 打包后安装到手机--次之(debug 版,会先尝试连 Metro 再回退)
 3. **`npx node-mobile-app test`** 后手动打开应用--最慢(同上,且 `test` 面向"连 USB 热更新"场景)
 
-若需要**热更新**,保持 USB 连接(维持 `adb reverse` 的端口转发);不需要热更新时,用 `build --release` 打包可避免等待 Metro 
+若需要**热更新**,保持 USB 连接(维持 `adb reverse` 的端口转发);不需要热更新时,用 `build --release` 打包可避免等待 Metro
 超时.
 
 ### Q:`test` 装到手机后拔 USB 就崩?
 
-前提是 APK 里有内置 bundle;`test` 每次都会先 `react-native bundle` 打进 
+前提是 APK 里有内置 bundle;`test` 每次都会先 `react-native bundle` 打进
 APK;**如果崩,检查 CLI 输出里 `[7/11] 生成 JS bundle(离线可用)` 是否成功**;
 
 ### Q:Node 进程启动失败怎么排查?
@@ -580,7 +582,7 @@ adb logcat | grep -E "NODEJS-MOBILE|ReactNativeJS"
 ```
 
 ### Q:`npm install` 时提示 `install-scripts not yet covered by allowScripts`?
-这是 npm 的提醒,表示某些依赖带有 `postinstall` / `install` 脚本,尚未在 `allowScripts` 里显式放行;`@flun/node-mobile-app` 
+这是 npm 的提醒,表示某些依赖带有 `postinstall` / `install` 脚本,尚未在 `allowScripts` 里显式放行;`@flun/node-mobile-app`
 及其依赖(`@flun/nodejs-mobile-react-native`、`esbuild` 等)需要执行这些脚本才能完整安装;
 
 放行方式见 [允许安装脚本执行](#允许安装脚本执行):在项目根 `package.json` 中添加 `allowScripts` 字段,逐项设为 `true`;
@@ -607,7 +609,7 @@ Express 5 的路由语法与 4 不同(如 `app.get('*')` 要改成 `app.get('/{*
 
 ### Q:`libnode.so` 和 `NodeMobile.xcframework` 是怎么来的?
 
-从 `@flun/nodejs-mobile-react-native` 1.0.1 起,两套预编译二进制**不在 npm 包里**,改为 postinstall 阶段自动从 Gitee / 
+从 `@flun/nodejs-mobile-react-native` 1.0.1 起,两套预编译二进制**不在 npm 包里**,改为 postinstall 阶段自动从 Gitee /
 GitHub Release 下载:
 
 | 资源                           | 目标位置                                                                    |
@@ -643,7 +645,7 @@ NODE_MOBILE_PREBUILT_IOS_SKIP=1          # 只跳过 iOS
 
 ### Q:iOS 提示 `fallbackSourceURL does not override`?
 
-RN 0.87 的 API 若变动,`AppDelegate.swift` 里的 fallback 可能不生效--不影响"连 Mac + Metro"正常开发,只是拔 Mac 后无法 
+RN 0.87 的 API 若变动,`AppDelegate.swift` 里的 fallback 可能不生效--不影响"连 Mac + Metro"正常开发,只是拔 Mac 后无法
 fallback 到内置 bundle;届时反馈,我们更新适配;
 
 ---
