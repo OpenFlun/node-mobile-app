@@ -6,9 +6,6 @@
 
 **核心理念**:你的 Node 项目保持不变,CLI 负责搬运,编译,打包;所有定制集中在 `mobileAppConfig.js` 一个文件;
 
-- GitHub:https://github.com/OpenFlun/node-mobile-app
-- Gitee(中国):https://gitee.com/OpenFlun/node-mobile-app
-
 ---
 
 ## 特性
@@ -659,5 +656,6 @@ ISC
 ## 贡献
 
 - 源码:[GitHub](https://github.com/OpenFlun/node-mobile-app)
+- 中国:[gitee](https://gitee.com/OpenFlun/node-mobile-app)
 - 问题反馈:[Issues](https://github.com/OpenFlun/node-mobile-app/issues)
 - 主页:[npm 包页面](https://www.npmjs.com/package/@flun/node-mobile-app#readme)
