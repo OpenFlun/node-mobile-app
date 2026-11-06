@@ -75,7 +75,10 @@
     "type": "git",
     "url": "git+https://github.com/OpenFlun/node-mobile-app.git"
   },
-  "gitee": "https://gitee.com/OpenFlun/node-mobile-app.git",
+  "gitee": {
+    "type": "git",
+    "url": "https://gitee.com/OpenFlun/node-mobile-app.git"
+  },
   "bugs": {
     "url": "https://github.com/OpenFlun/node-mobile-app/issues"
   },
