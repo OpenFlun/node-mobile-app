@@ -135,9 +135,13 @@ const ensureDir = dir => {
       verbose = !quiet || process.env.OPTIMIZE_DEBUG, KEY_RE = /Installing|Installed|FAILED|error|Error|失败|退出码/;
     let first = true;
     const write = chunk => {
+      if (verbose) {
+        if (first) process.stdout.write(prefix), first = false;
+        process.stdout.write(chunk);
+        return;
+      }
       for (const line of chunk.toString().split(/\r?\n/)) {
-        if (!line.trim()) continue;
-        if (!verbose && !KEY_RE.test(line)) continue;
+        if (!line.trim() || !KEY_RE.test(line)) continue;
         process.stdout.write((first ? prefix : '') + line + '\n');
         first = false;
       }

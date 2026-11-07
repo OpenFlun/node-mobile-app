@@ -141,7 +141,8 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
       console.log(chalk.cyan(`\n[10/${total}] 编译 Debug 包`));
       const gradlew = process.platform === 'win32' ? 'gradlew.bat' : './gradlew';
       if (process.env.OPTIMIZE_DEBUG) await runStream(gradlew, ['assembleDebug'], {
-        cwd: path.join(buildDir, 'android'), env: { ...process.env, NODE_MOBILE_MODE: 'test' }
+        cwd: path.join(buildDir, 'android'), env: { ...process.env, NODE_MOBILE_MODE: 'test' },
+        stdio: 'inherit'
       });
       else {
         console.log(chalk.gray('  编译中...'));
