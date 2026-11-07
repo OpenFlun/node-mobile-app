@@ -1,6 +1,6 @@
 # 变更日志
 
-## [4.1.2] - 2026-11-07 22:17
+## [4.1.2] - 2026-11-07 22:27
 ### 修复
 - 修复 Android 构建长时间卡在 Gradle 下载的问题;模板 `gradle-wrapper.properties` 的 `distributionUrl`
   由 `services.gradle.org` 改为腾讯云镜像,国内直连官方源常超时且不报错;
